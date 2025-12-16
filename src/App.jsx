@@ -1,8 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Moon, Zap, Trophy, Dumbbell, Coffee, Info, ChevronLeft, ChevronRight, Utensils, CheckCircle, Droplets, Apple, Carrot, Beef, ShoppingBasket, Dices, Plus, Trash2 } from 'lucide-react';
+import {
+  Calendar, Moon, Zap, Trophy, Dumbbell, Coffee, Info,
+  ChevronLeft, ChevronRight, Utensils, CheckCircle, Droplets,
+  Apple, Carrot, Beef, ShoppingBasket, Dices, Plus, Trash2,
+  Home, List, Activity, X, ChefHat, ArrowRight
+} from 'lucide-react';
 
 // --- DATA & LOGIC ---
-
 const RECIPES = [
   {
     id: 1,
@@ -321,13 +325,13 @@ const getDetailedNutrition = (dayIndex, activityType) => {
       };
     case 4: // Donderdag (Kracht)
       if (activityType === 'match') {
-         return {
+        return {
           ...base,
           lunch: "Grote warme lunch als het kan.",
           dinner: "Lichte maaltijd om 17:30. Pasta/Wraps.",
           snack: "Banaan en koek mee voor na de wedstrijd.",
           familyTip: "Zorg dat oppas/partner weet wat de kids eten."
-         };
+        };
       }
       return {
         ...base,
@@ -349,7 +353,7 @@ const getDetailedNutrition = (dayIndex, activityType) => {
           breakfast: "Pannenkoeken (gezond) of Havermout. Goede bodem.",
           lunch: "3 uur voor de wedstrijd: Laatste grote maaltijd (Pasta/Brood).",
           snack: "Neem een banaan en ontbijtkoek mee in je tas.",
-          dinner: "Herstelmaaltijd na de wedstrijd: Pasta/Wraps met eiwitten.", 
+          dinner: "Herstelmaaltijd na de wedstrijd: Pasta/Wraps met eiwitten.",
           familyTip: "Zorg dat de tas met snacks voor de kids ook klaar staat."
         };
       }
@@ -371,402 +375,476 @@ const getDayPlan = (dateStr, dayIndex) => {
   return { ...basePlan, nutrition };
 };
 
-const getColorClass = (type) => {
+const getTheme = (type) => {
   switch (type) {
-    case "match": return "bg-red-50 border-red-500 text-red-900";
-    case "training": return "bg-blue-50 border-blue-500 text-blue-900";
-    case "sleep": return "bg-indigo-50 border-indigo-500 text-indigo-900";
-    case "strength": return "bg-orange-50 border-orange-500 text-orange-900";
-    case "power": return "bg-yellow-50 border-yellow-500 text-yellow-900";
-    default: return "bg-gray-50 border-gray-400 text-gray-800";
+    case "match": return { bg: "bg-red-500", text: "text-red-600", light: "bg-red-50", border: "border-red-200" };
+    case "training": return { bg: "bg-blue-500", text: "text-blue-600", light: "bg-blue-50", border: "border-blue-200" };
+    case "sleep": return { bg: "bg-indigo-500", text: "text-indigo-600", light: "bg-indigo-50", border: "border-indigo-200" };
+    case "strength": return { bg: "bg-orange-500", text: "text-orange-600", light: "bg-orange-50", border: "border-orange-200" };
+    case "power": return { bg: "bg-yellow-500", text: "text-yellow-600", light: "bg-yellow-50", border: "border-yellow-200" };
+    default: return { bg: "bg-slate-500", text: "text-slate-600", light: "bg-slate-50", border: "border-slate-200" };
   }
 };
 
-const getIcon = (iconName) => {
+const getIcon = (iconName, className = "w-6 h-6") => {
   switch (iconName) {
-    case "trophy": return <Trophy className="w-6 h-6" />;
-    case "volleyball": return <div className="text-xl">🏐</div>; 
-    case "moon": return <Moon className="w-6 h-6" />;
-    case "dumbbell": return <Dumbbell className="w-6 h-6" />;
-    case "zap": return <Zap className="w-6 h-6" />;
-    case "coffee": return <Coffee className="w-6 h-6" />;
-    default: return <Info className="w-6 h-6" />;
+    case "trophy": return <Trophy className={className} />;
+    case "volleyball": return <div className="text-2xl">🏐</div>;
+    case "moon": return <Moon className={className} />;
+    case "dumbbell": return <Dumbbell className={className} />;
+    case "zap": return <Zap className={className} />;
+    case "coffee": return <Coffee className={className} />;
+    default: return <Info className={className} />;
   }
 };
 
 // --- COMPONENTS ---
 
-const Modal = ({ isOpen, onClose, children }) => {
+const WeekStrip = ({ currentDate, onSelectDate }) => {
+  const days = [];
+  const today = new Date();
+  // Generate a 2-week window centered on today, or just this week. 
+  // Let's do: Today - 2 days to Today + 4 days (7 days total)
+  for (let i = -2; i < 5; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    days.push(d);
+  }
+
+  return (
+    <div className="flex gap-3 overflow-x-auto no-scrollbar py-2 px-1 -mx-1 mb-6 snap-x">
+      {days.map(d => {
+        const isSelected = d.toDateString() === currentDate.toDateString();
+        const isToday = d.toDateString() === new Date().toDateString();
+        return (
+          <button
+            key={d.toISOString()}
+            onClick={() => onSelectDate(d)}
+            className={`flex flex-col items-center min-w-[3.5rem] p-2 rounded-2xl transition-all snap-center ${isSelected
+              ? 'bg-blue-600 text-white shadow-lg shadow-blue-200 scale-105'
+              : 'bg-white text-slate-400 border border-slate-100'
+              }`}
+          >
+            <span className="text-[10px] font-bold uppercase mb-1">{d.toLocaleDateString('nl-NL', { weekday: 'short' }).slice(0, 2)}</span>
+            <span className={`text-lg font-bold ${isSelected ? 'text-white' : 'text-slate-800'}`}>{d.getDate()}</span>
+            {isToday && <div className={`w-1 h-1 rounded-full mt-1 ${isSelected ? 'bg-white' : 'bg-blue-500'}`} />}
+          </button>
+        )
+      })}
+    </div>
+  );
+};
+
+const BottomNav = ({ activeTab, setActiveTab }) => {
+  const tabs = [
+    { id: 'home', icon: Home, label: 'Home' },
+    { id: 'food', icon: ChefHat, label: 'Voeding' },
+    { id: 'circuit', icon: Activity, label: 'Circuit' },
+    { id: 'list', icon: List, label: 'Lijst' },
+  ];
+
+  return (
+    <div className="fixed bottom-0 left-0 right-0 bg-white/90 backdrop-blur-lg border-t border-slate-200 pb-safe z-50">
+      <div className="flex justify-around items-center h-16 max-w-md mx-auto">
+        {tabs.map((tab) => {
+          const Icon = tab.icon;
+          const isActive = activeTab === tab.id;
+          return (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`flex flex-col items-center justify-center w-full h-full transition-all duration-200 ${isActive ? 'text-blue-600 scale-110' : 'text-slate-400 hover:text-slate-600'
+                }`}
+            >
+              <Icon className={`w-6 h-6 ${isActive ? 'fill-current' : ''}`} strokeWidth={isActive ? 2.5 : 2} />
+              <span className="text-[10px] font-medium mt-1">{tab.label}</span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+};
+
+const Modal = ({ isOpen, onClose, title, children }) => {
   if (!isOpen) return null;
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4" onClick={onClose}>
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6 relative overflow-y-auto max-h-[90vh]" onClick={e => e.stopPropagation()}>
-        <button onClick={onClose} className="absolute top-4 right-4 text-gray-500 hover:text-gray-700">✕</button>
-        {children}
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center pointer-events-none">
+      <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity pointer-events-auto" onClick={onClose} />
+      <div className="bg-white w-full max-w-md mx-auto rounded-t-2xl sm:rounded-2xl shadow-2xl transform transition-transform duration-300 pointer-events-auto max-h-[90vh] flex flex-col">
+        <div className="p-4 border-b border-slate-100 flex justify-between items-center shrink-0">
+          <h3 className="font-bold text-lg text-slate-800">{title}</h3>
+          <button onClick={onClose} className="p-2 bg-slate-100 rounded-full hover:bg-slate-200 transition">
+            <X className="w-5 h-5 text-slate-500" />
+          </button>
+        </div>
+        <div className="p-5 overflow-y-auto">
+          {children}
+        </div>
       </div>
     </div>
   );
 };
 
-const HabitTracker = ({ dateStr }) => {
-  const [habits, setHabits] = useState({ water: false, fruit: false, veggies: false, protein: false });
-  const toggle = (key) => setHabits(prev => ({ ...prev, [key]: !prev[key] }));
+const HabitButton = ({ icon: Icon, label, colorClass, active, onClick }) => (
+  <button
+    onClick={onClick}
+    className={`flex flex-col items-center justify-center p-3 rounded-2xl transition-all duration-300 border ${active
+      ? `bg-${colorClass}-100 border-${colorClass}-300 text-${colorClass}-700 shadow-sm scale-105`
+      : 'bg-white border-slate-100 text-slate-400 hover:bg-slate-50'
+      }`}
+  >
+    <div className={`p-2 rounded-full mb-2 ${active ? `bg-${colorClass}-200` : 'bg-slate-100'}`}>
+      <Icon className={`w-5 h-5 ${active ? 'fill-current' : ''}`} />
+    </div>
+    <span className="text-[10px] font-bold uppercase tracking-wide">{label}</span>
+  </button>
+);
 
-  return (
-    <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-100 mt-4">
-      <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Dagelijkse Checklist</h3>
-      <div className="grid grid-cols-4 gap-2">
-        <button onClick={() => toggle('water')} className={`flex flex-col items-center p-2 rounded-lg transition ${habits.water ? 'bg-blue-100 text-blue-700' : 'bg-gray-50 text-gray-400'}`}>
-          <Droplets className="w-5 h-5 mb-1" />
-          <span className="text-[10px] font-bold">2L Water</span>
-        </button>
-        <button onClick={() => toggle('fruit')} className={`flex flex-col items-center p-2 rounded-lg transition ${habits.fruit ? 'bg-green-100 text-green-700' : 'bg-gray-50 text-gray-400'}`}>
-          <Apple className="w-5 h-5 mb-1" />
-          <span className="text-[10px] font-bold">2x Fruit</span>
-        </button>
-        <button onClick={() => toggle('veggies')} className={`flex flex-col items-center p-2 rounded-lg transition ${habits.veggies ? 'bg-green-100 text-green-700' : 'bg-gray-50 text-gray-400'}`}>
-          <Carrot className="w-5 h-5 mb-1" />
-          <span className="text-[10px] font-bold">Groente</span>
-        </button>
-        <button onClick={() => toggle('protein')} className={`flex flex-col items-center p-2 rounded-lg transition ${habits.protein ? 'bg-red-100 text-red-700' : 'bg-gray-50 text-gray-400'}`}>
-          <Beef className="w-5 h-5 mb-1" />
-          <span className="text-[10px] font-bold">Eiwit</span>
-        </button>
+const RecipeCard = ({ recipe, onClick }) => (
+  <div onClick={onClick} className="bg-white rounded-xl p-4 shadow-sm border border-slate-100 hover:shadow-md transition cursor-pointer flex gap-4 items-center">
+    <div className="w-16 h-16 rounded-lg bg-orange-100 flex items-center justify-center text-2xl shrink-0">
+      🥘
+    </div>
+    <div className="flex-1">
+      <h4 className="font-bold text-slate-800 leading-tight mb-1">{recipe.title}</h4>
+      <div className="flex gap-2 text-xs text-slate-500">
+        <span className="flex items-center gap-1"><Zap className="w-3 h-3" /> {recipe.time}</span>
+        <span className="px-2 py-0.5 bg-slate-100 rounded-full">{recipe.tags[0]}</span>
       </div>
     </div>
-  );
-};
+    <ChevronRight className="w-5 h-5 text-slate-300" />
+  </div>
+);
+
+// --- MAIN APP ---
 
 export default function App() {
+  const [activeTab, setActiveTab] = useState('home');
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [showCircuit, setShowCircuit] = useState(false);
-  const [showGroceryList, setShowGroceryList] = useState(false);
+
+  // Modals
   const [showRecipeModal, setShowRecipeModal] = useState(false);
-  
-  // Recipe Roulette State
   const [selectedRecipe, setSelectedRecipe] = useState(null);
+
+  // Data State
+  const [habits, setHabits] = useState({ water: false, fruit: false, veggies: false, protein: false });
   const [shoppingListItems, setShoppingListItems] = useState([]);
 
+  // Helpers
   const toISODate = (d) => d.toISOString().split('T')[0];
-  const getDayName = (d) => d.toLocaleDateString('nl-NL', { weekday: 'long' });
-  const getNiceDate = (d) => d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'long' });
+  const dateStr = toISODate(currentDate);
+  const plan = getDayPlan(dateStr, currentDate.getDay());
+  const theme = getTheme(plan.type);
+  const isToday = toISODate(new Date()) === dateStr;
 
-  const nextDay = () => {
-    const next = new Date(currentDate);
-    next.setDate(currentDate.getDate() + 1);
-    setCurrentDate(next);
-  };
+  const toggleHabit = (key) => setHabits(prev => ({ ...prev, [key]: !prev[key] }));
 
-  const prevDay = () => {
-    const prev = new Date(currentDate);
-    prev.setDate(currentDate.getDate() - 1);
-    setCurrentDate(prev);
-  };
-  
-  const resetToday = () => setCurrentDate(new Date());
-
-  // Logic to pick a random recipe
   const spinRecipe = () => {
     const random = RECIPES[Math.floor(Math.random() * RECIPES.length)];
     setSelectedRecipe(random);
     setShowRecipeModal(true);
   };
 
-  // Logic to add ingredients to shopping list
   const addIngredientsToList = () => {
     if (selectedRecipe) {
-      // Avoid duplicates roughly
       const newItems = selectedRecipe.ingredients.filter(item => !shoppingListItems.includes(item));
       setShoppingListItems(prev => [...prev, ...newItems]);
       setShowRecipeModal(false);
-      setShowGroceryList(true); // Open list to confirm
+      setActiveTab('list'); // Switch to list tab
     }
   };
 
-  const clearCustomList = () => {
-      setShoppingListItems([]);
-  };
-
-  const dateStr = toISODate(currentDate);
-  const plan = getDayPlan(dateStr, currentDate.getDay());
-  const isToday = toISODate(new Date()) === dateStr;
-
-  const getWeekDays = (baseDate) => {
-    const days = [];
-    const currentDayIndex = baseDate.getDay() || 7;
-    const monday = new Date(baseDate);
-    monday.setDate(baseDate.getDate() - (currentDayIndex - 1));
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
-      days.push(d);
-    }
-    return days;
-  };
-
-  const weekDays = getWeekDays(currentDate);
-
-  return (
-    <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-12">
-      {/* HEADER */}
-      <header className="bg-blue-900 text-white p-4 shadow-lg sticky top-0 z-10">
-        <div className="max-w-md mx-auto flex flex-col gap-3">
-            <div className="flex justify-between items-center">
-              <div>
-                <h1 className="text-xl font-bold tracking-tight">Volleybal & Voeding</h1>
-                <p className="text-xs text-blue-200">Gezond eten = Beter spelen</p>
-              </div>
-              <button 
-                onClick={spinRecipe}
-                className="bg-yellow-400 hover:bg-yellow-300 text-yellow-900 px-3 py-2 rounded-full transition flex items-center gap-1 shadow-md font-bold text-xs animate-pulse"
-              >
-                <Dices className="w-4 h-4" /> Wat eten we?
-              </button>
-            </div>
-
-            <div className="flex gap-2 justify-center">
-                <button 
-                    onClick={() => setShowGroceryList(true)}
-                    className="text-xs bg-blue-800 hover:bg-blue-700 px-3 py-1.5 rounded-full transition flex items-center gap-1"
-                >
-                    <ShoppingBasket className="w-3 h-3" /> Lijst {shoppingListItems.length > 0 && `(${shoppingListItems.length})`}
-                </button>
-                <button 
-                    onClick={() => setShowCircuit(true)}
-                    className="text-xs bg-blue-700 hover:bg-blue-600 px-3 py-1.5 rounded-full transition"
-                >
-                    Mijn Circuit
-                </button>
-            </div>
-        </div>
-      </header>
-
-      <div className="max-w-md mx-auto p-4 space-y-5">
-        
-        {/* DATE NAVIGATION */}
-        <div className="flex justify-between items-center bg-white p-2 rounded-lg shadow-sm">
-          <button onClick={prevDay} className="p-2 hover:bg-gray-100 rounded-full"><ChevronLeft className="w-5 h-5" /></button>
-          <div className="text-center cursor-pointer" onClick={resetToday}>
-            <div className="text-xs text-gray-500 uppercase font-bold">{isToday ? "VANDAAG" : getDayName(currentDate)}</div>
-            <div className="font-semibold">{getNiceDate(currentDate)}</div>
-          </div>
-          <button onClick={nextDay} className="p-2 hover:bg-gray-100 rounded-full"><ChevronRight className="w-5 h-5" /></button>
-        </div>
-
-        {/* HERO CARD (ACTIVITY) */}
-        <div className={`p-5 rounded-2xl shadow-sm border-l-8 flex items-center gap-4 transition-colors duration-300 ${getColorClass(plan.type)}`}>
-          <div className="bg-white bg-opacity-40 p-3 rounded-full shrink-0">
-            {getIcon(plan.icon)}
-          </div>
-          <div>
-            <h2 className="text-xl font-bold leading-tight">{plan.title}</h2>
-            <p className="text-sm font-medium opacity-90">{plan.details}</p>
-             {plan.type === "strength" && (
-                <button onClick={() => setShowCircuit(true)} className="text-xs underline mt-1 font-bold">Bekijk oefeningen</button>
-             )}
-          </div>
-        </div>
-
-        {/* NUTRITION & FAMILY PLANNER (EXPANDED) */}
-        <div className="bg-green-50 rounded-2xl p-5 border border-green-200 shadow-sm relative overflow-hidden">
-          <div className="absolute top-0 right-0 p-3 opacity-10">
-            <Utensils className="w-24 h-24 text-green-800" />
-          </div>
-          
-          <h3 className="text-green-900 font-bold text-lg mb-4 flex items-center gap-2">
-            <Utensils className="w-5 h-5" /> Brandstof & Gezin
-          </h3>
-
-          <div className="space-y-4 relative z-10">
-            {/* Breakfast/Lunch/Dinner List */}
-            <div className="space-y-3">
-              <div className="flex gap-3 items-start">
-                <span className="text-xs font-bold bg-green-200 text-green-800 px-2 py-1 rounded w-16 text-center shrink-0">LUNCH</span>
-                <p className="text-sm text-green-900 leading-snug">{plan.nutrition.lunch}</p>
-              </div>
-              
-              <div className="flex gap-3 items-start">
-                <span className="text-xs font-bold bg-green-200 text-green-800 px-2 py-1 rounded w-16 text-center shrink-0">DINER</span>
-                <p className="text-sm text-green-900 leading-snug">{plan.nutrition.dinner}</p>
-              </div>
-
-              {plan.nutrition.snack && (
-                <div className="flex gap-3 items-start">
-                  <span className="text-xs font-bold bg-yellow-200 text-yellow-800 px-2 py-1 rounded w-16 text-center shrink-0">SNACK</span>
-                  <p className="text-sm text-green-900 leading-snug font-medium">{plan.nutrition.snack}</p>
-                </div>
-              )}
-            </div>
-
-            {/* Family Tip Box */}
-            <div className="bg-white bg-opacity-60 rounded-lg p-3 mt-2 border-l-4 border-green-500">
-               <p className="text-xs text-green-800 italic">
-                 <strong>👨‍👩‍👧‍👦 Gezin Tip:</strong> {plan.nutrition.familyTip}
-               </p>
-            </div>
-          </div>
-        </div>
-
-        {/* HABIT TRACKER */}
-        <HabitTracker dateStr={dateStr} />
-
-        {/* WEEK OVERVIEW */}
+  // Views
+  const renderHome = () => (
+    <div className="space-y-6 animate-fade-in pb-24">
+      {/* Header */}
+      <div className="flex justify-between items-end px-1">
         <div>
-          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Deze Week</h3>
-          <div className="bg-white rounded-xl shadow-sm overflow-hidden divide-y divide-gray-100">
-            {weekDays.map((d) => {
-              const dStr = toISODate(d);
-              const p = getDayPlan(dStr, d.getDay());
-              const isSelected = dStr === dateStr;
-              const isRealToday = dStr === toISODate(new Date());
+          <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">{currentDate.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          <h1 className="text-3xl font-bold text-slate-900">Hoi, Hidde 👋</h1>
+        </div>
+        <button onClick={() => setCurrentDate(new Date())} className={`p-2 rounded-full transition ${isToday ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
+          <Calendar className="w-6 h-6" />
+        </button>
+      </div>
 
-              // SAFE SPLIT: Prevents crash if dinner is missing
-              const dinnerShort = p.nutrition?.dinner ? p.nutrition.dinner.split(':')[0] : 'Geen info';
+      {/* Week Strip */}
+      <WeekStrip currentDate={currentDate} onSelectDate={setCurrentDate} />
 
-              return (
-                <div 
-                  key={dStr} 
-                  onClick={() => setCurrentDate(d)}
-                  className={`p-3 flex items-center justify-between cursor-pointer transition ${isSelected ? 'bg-blue-50' : 'hover:bg-gray-50'}`}
-                >
-                  <div className="flex items-center space-x-3">
-                    <div className={`w-8 text-center text-xs font-bold ${isRealToday ? 'text-blue-600' : 'text-gray-400'}`}>
-                      <div>{d.toLocaleDateString('nl-NL', { weekday: 'short' }).toUpperCase()}</div>
-                      <div className="text-sm">{d.getDate()}</div>
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-gray-700">{p.title}</div>
-                      <div className="text-[10px] text-gray-500 truncate max-w-[150px]">{dinnerShort}</div>
-                    </div>
-                  </div>
-                  <div className={`p-1.5 rounded-full ${p.type === 'match' ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-400'}`}>
-                    {p.type === 'match' ? <Trophy className="w-3 h-3" /> : (p.type === 'strength' ? <Dumbbell className="w-3 h-3"/> : <div className="w-3 h-3 rounded-full bg-current opacity-20"/>)}
-                  </div>
-                </div>
-              );
-            })}
+      {/* Hero Card */}
+      <div className={`relative overflow-hidden rounded-3xl p-6 shadow-lg text-white ${theme.bg}`}>
+        <div className="absolute top-0 right-0 p-8 opacity-10 transform translate-x-4 -translate-y-4">
+          {getIcon(plan.icon, "w-40 h-40")}
+        </div>
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 backdrop-blur-md text-xs font-bold mb-4 border border-white/10">
+            {getIcon(plan.icon, "w-3 h-3")}
+            <span className="uppercase">{plan.type === 'match' ? 'Wedstrijdag' : plan.type}</span>
+          </div>
+          <h2 className="text-3xl font-bold mb-2 leading-tight">{plan.title}</h2>
+          <p className="text-white/90 font-medium text-lg mb-6 max-w-[80%]">{plan.details}</p>
+
+          {plan.type === 'strength' && (
+            <button
+              onClick={() => setActiveTab('circuit')}
+              className="bg-white text-orange-600 px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:bg-orange-50 transition flex items-center gap-2"
+            >
+              Start Circuit <ArrowRight className="w-4 h-4" />
+            </button>
+          )}
+        </div>
+      </div>
+
+      {/* Habit Tracker */}
+      <div>
+        <h3 className="text-lg font-bold text-slate-800 mb-3 px-1">Dagelijkse Doelen</h3>
+        <div className="grid grid-cols-2 gap-3">
+          <HabitButton icon={Droplets} label="2L Water" colorClass="blue" active={habits.water} onClick={() => toggleHabit('water')} />
+          <HabitButton icon={Apple} label="2x Fruit" colorClass="green" active={habits.fruit} onClick={() => toggleHabit('fruit')} />
+          <HabitButton icon={Carrot} label="Groente" colorClass="green" active={habits.veggies} onClick={() => toggleHabit('veggies')} />
+          <HabitButton icon={Beef} label="Eiwit" colorClass="red" active={habits.protein} onClick={() => toggleHabit('protein')} />
+        </div>
+      </div>
+
+      {/* Quick Nutrition */}
+      <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold text-slate-800">Vandaag Eten</h3>
+          <button onClick={() => setActiveTab('food')} className="text-sm font-bold text-blue-600 hover:underline">Details</button>
+        </div>
+        <div className="space-y-4">
+          <div className="flex gap-4 items-start">
+            <div className="w-10 h-10 rounded-full bg-orange-100 flex items-center justify-center text-orange-600 shrink-0">
+              <Utensils className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-slate-400 uppercase">Diner</p>
+              <p className="text-slate-700 font-medium leading-snug">{plan.nutrition.dinner}</p>
+            </div>
+          </div>
+          {plan.nutrition.snack && (
+            <div className="flex gap-4 items-start">
+              <div className="w-10 h-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 shrink-0">
+                <Zap className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs font-bold text-slate-400 uppercase">Snack Tip</p>
+                <p className="text-slate-700 font-medium leading-snug">{plan.nutrition.snack}</p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderFood = () => (
+    <div className="space-y-6 animate-fade-in pb-24">
+      <div className="px-1">
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">Voeding & Recepten</h1>
+        <p className="text-slate-500">Brandstof voor je prestaties.</p>
+      </div>
+
+      {/* Daily Plan Card */}
+      <div className="bg-green-50 rounded-3xl p-6 border border-green-100 relative overflow-hidden">
+        <div className="absolute top-0 right-0 p-4 opacity-5">
+          <ChefHat className="w-32 h-32 text-green-900" />
+        </div>
+        <h3 className="text-green-900 font-bold text-lg mb-4 flex items-center gap-2 relative z-10">
+          <Utensils className="w-5 h-5" /> Menu van Vandaag
+        </h3>
+        <div className="space-y-4 relative z-10">
+          {['breakfast', 'lunch', 'dinner'].map(type => (
+            <div key={type} className="bg-white/60 backdrop-blur-sm p-3 rounded-xl border border-white/50">
+              <span className="text-[10px] font-bold bg-green-200 text-green-800 px-2 py-0.5 rounded uppercase mb-1 inline-block">
+                {type === 'breakfast' ? 'Ontbijt' : type}
+              </span>
+              <p className="text-sm text-green-900 font-medium">{plan.nutrition[type]}</p>
+            </div>
+          ))}
+          <div className="bg-yellow-50 p-3 rounded-xl border border-yellow-100 flex gap-3 items-start">
+            <Info className="w-5 h-5 text-yellow-600 shrink-0 mt-0.5" />
+            <p className="text-xs text-yellow-800 italic"><strong>Family Tip:</strong> {plan.nutrition.familyTip}</p>
           </div>
         </div>
       </div>
 
-      {/* CIRCUIT MODAL */}
-      <Modal isOpen={showCircuit} onClose={() => setShowCircuit(false)}>
-        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-          <Dumbbell className="w-5 h-5 text-blue-600" /> Jouw Kracht Circuit
-        </h2>
-        <p className="text-sm text-gray-500 mb-4">Doe 3 rondes. 90 sec rust tussen rondes.</p>
-        
-        <ul className="space-y-4 text-sm">
-          <li className="flex gap-3"><div className="bg-blue-100 text-blue-800 font-bold w-6 h-6 rounded flex items-center justify-center shrink-0">1</div><div><span className="font-bold block">Banded Squats</span><span className="text-gray-600">15x. Op band staan, uiteinden bij schouders.</span></div></li>
-          <li className="flex gap-3"><div className="bg-blue-100 text-blue-800 font-bold w-6 h-6 rounded flex items-center justify-center shrink-0">2</div><div><span className="font-bold block">Jump Squats</span><span className="text-gray-600">8-10x. Explosief omhoog, zacht landen!</span></div></li>
-          <li className="flex gap-3"><div className="bg-blue-100 text-blue-800 font-bold w-6 h-6 rounded flex items-center justify-center shrink-0">3</div><div><span className="font-bold block">Band Pull-Aparts</span><span className="text-gray-600">15-20x. Armen gestrekt, band naar borst trekken.</span></div></li>
-          <li className="flex gap-3"><div className="bg-blue-100 text-blue-800 font-bold w-6 h-6 rounded flex items-center justify-center shrink-0">4</div><div><span className="font-bold block">Monster Walks</span><span className="text-gray-600">20 stap links/rechts. Band om enkels/knieën.</span></div></li>
-          <li className="flex gap-3"><div className="bg-blue-100 text-blue-800 font-bold w-6 h-6 rounded flex items-center justify-center shrink-0">5</div><div><span className="font-bold block">Overhead Press</span><span className="text-gray-600">10-12x. Op band staan, uitduwen boven hoofd.</span></div></li>
-          <li className="flex gap-3"><div className="bg-blue-100 text-blue-800 font-bold w-6 h-6 rounded flex items-center justify-center shrink-0">6</div><div><span className="font-bold block">Plank</span><span className="text-gray-600">45-60 sec. Navel intrekken.</span></div></li>
-        </ul>
-        <button onClick={() => setShowCircuit(false)} className="mt-6 w-full bg-blue-600 text-white py-2 rounded-lg font-semibold hover:bg-blue-700">Sluiten</button>
-      </Modal>
-
-      {/* GROCERY LIST MODAL */}
-      <Modal isOpen={showGroceryList} onClose={() => setShowGroceryList(false)}>
-        <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <ShoppingBasket className="w-5 h-5 text-green-600" /> Boodschappenlijst
-        </h2>
-
-        {/* Dynamic Items from Recipe */}
-        {shoppingListItems.length > 0 && (
-            <div className="mb-6 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                <div className="flex justify-between items-center mb-2">
-                    <h3 className="text-sm font-bold text-yellow-800 uppercase">Toegevoegd voor Recept</h3>
-                    <button onClick={clearCustomList} className="text-xs text-red-500 flex items-center hover:underline"><Trash2 className="w-3 h-3 mr-1"/> Wis</button>
-                </div>
-                <ul className="text-sm space-y-2">
-                    {shoppingListItems.map((item, idx) => (
-                        <li key={idx} className="flex items-center gap-2">
-                            <CheckCircle className="w-4 h-4 text-green-500" />
-                            <span>{item}</span>
-                        </li>
-                    ))}
-                </ul>
-            </div>
-        )}
-
-        <div className="space-y-4">
-            <div>
-                <h3 className="text-sm font-bold text-gray-700 uppercase mb-2 border-b">Voorraadkast (Basis)</h3>
-                <ul className="text-sm space-y-1 list-disc list-inside text-gray-600">
-                    <li>Volkoren Pasta & Zilvervliesrijst</li>
-                    <li>Havermout & Wraps</li>
-                    <li>Noten, Pindakaas & Peulvruchten</li>
-                    <li>Tomatenblokjes & Tonijn (blik)</li>
-                </ul>
-            </div>
-            <div>
-                <h3 className="text-sm font-bold text-gray-700 uppercase mb-2 border-b">Vers & Koeling</h3>
-                <ul className="text-sm space-y-1 list-disc list-inside text-gray-600">
-                    <li>Magere Kwark & Eieren</li>
-                    <li>Komkommer, Tomaten, Worteltjes</li>
-                    <li>Hüttenkäse & Humus</li>
-                </ul>
-            </div>
-             <div>
-                <h3 className="text-sm font-bold text-gray-700 uppercase mb-2 border-b">Diepvries & Snacks</h3>
-                <ul className="text-sm space-y-1 list-disc list-inside text-gray-600">
-                    <li>Diepvriesfruit & Groenten (Erwten/Spinazie)</li>
-                    <li>Kipfiletblokjes</li>
-                    <li>Bananen & Ontbijtkoek</li>
-                </ul>
-            </div>
+      {/* Recipe Roulette */}
+      <div>
+        <div className="flex justify-between items-center mb-3 px-1">
+          <h3 className="text-lg font-bold text-slate-800">Inspiratie Nodig?</h3>
         </div>
-        <button onClick={() => setShowGroceryList(false)} className="mt-6 w-full bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700">Sluiten</button>
-      </Modal>
-
-      {/* RECIPE ROULETTE MODAL */}
-      <Modal isOpen={showRecipeModal} onClose={() => setShowRecipeModal(false)}>
-        {selectedRecipe && (
-            <div className="text-center">
-                <div className="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
-                    <span className="text-3xl">🍲</span>
-                </div>
-                <h2 className="text-xl font-bold text-gray-800 mb-1">{selectedRecipe.title}</h2>
-                <div className="flex justify-center gap-2 mb-4">
-                    {selectedRecipe.tags.map(tag => (
-                        <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{tag}</span>
-                    ))}
-                    <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">⏱ {selectedRecipe.time}</span>
-                </div>
-
-                <div className="bg-green-50 p-4 rounded-lg text-left mb-4 border border-green-100">
-                    <h3 className="font-bold text-green-800 text-sm mb-2">Ingrediënten:</h3>
-                    <ul className="text-sm text-gray-700 list-disc list-inside">
-                        {selectedRecipe.ingredients.map(ing => <li key={ing}>{ing}</li>)}
-                    </ul>
-                </div>
-
-                <div className="text-left mb-6">
-                    <h3 className="font-bold text-gray-800 text-sm mb-1">Zo maak je het:</h3>
-                    <p className="text-sm text-gray-600 leading-relaxed">{selectedRecipe.instructions}</p>
-                </div>
-
-                <div className="space-y-3">
-                    <button 
-                        onClick={addIngredientsToList}
-                        className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm"
-                    >
-                        <Plus className="w-5 h-5" /> Zet op Boodschappenlijst
-                    </button>
-                    
-                    <button 
-                        onClick={spinRecipe}
-                        className="w-full bg-white border-2 border-yellow-400 text-yellow-700 hover:bg-yellow-50 py-2 rounded-xl font-bold flex items-center justify-center gap-2"
-                    >
-                        <Dices className="w-4 h-4" /> Ander Recept
-                    </button>
-                </div>
+        <button
+          onClick={spinRecipe}
+          className="w-full bg-gradient-to-r from-orange-400 to-red-500 text-white p-4 rounded-2xl shadow-lg shadow-orange-200 flex items-center justify-between group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="bg-white/20 p-2 rounded-lg">
+              <Dices className="w-6 h-6 text-white" />
             </div>
-        )}
-      </Modal>
+            <div className="text-left">
+              <span className="block font-bold text-lg">Wat eten we?</span>
+              <span className="text-white/80 text-xs">Krijg een random recept</span>
+            </div>
+          </div>
+          <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition" />
+        </button>
+      </div>
 
+      {/* Popular Recipes List */}
+      <div className="space-y-3">
+        <h3 className="text-lg font-bold text-slate-800 px-1">Favorieten</h3>
+        {RECIPES.slice(0, 3).map(r => (
+          <RecipeCard key={r.id} recipe={r} onClick={() => { setSelectedRecipe(r); setShowRecipeModal(true); }} />
+        ))}
+      </div>
+    </div>
+  );
+
+  const renderCircuit = () => (
+    <div className="space-y-6 animate-fade-in pb-24">
+      <div className="px-1">
+        <h1 className="text-3xl font-bold text-slate-900 mb-2">Kracht Circuit</h1>
+        <p className="text-slate-500">3 rondes. 90 sec rust tussen rondes.</p>
+      </div>
+
+      <div className="space-y-3">
+        {[
+          { id: 1, title: "Banded Squats", reps: "15x", desc: "Op band staan, uiteinden bij schouders." },
+          { id: 2, title: "Jump Squats", reps: "8-10x", desc: "Explosief omhoog, zacht landen!" },
+          { id: 3, title: "Band Pull-Aparts", reps: "15-20x", desc: "Armen gestrekt, band naar borst trekken." },
+          { id: 4, title: "Monster Walks", reps: "20 stap", desc: "Links/rechts. Band om enkels/knieën." },
+          { id: 5, title: "Overhead Press", reps: "10-12x", desc: "Op band staan, uitduwen boven hoofd." },
+          { id: 6, title: "Plank", reps: "45-60s", desc: "Navel intrekken. Rug recht." },
+        ].map((ex) => (
+          <div key={ex.id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex gap-4 items-center">
+            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 font-bold text-xl flex items-center justify-center shrink-0">
+              {ex.id}
+            </div>
+            <div>
+              <h4 className="font-bold text-slate-800">{ex.title}</h4>
+              <p className="text-xs text-slate-500">{ex.desc}</p>
+            </div>
+            <div className="ml-auto bg-slate-100 px-3 py-1 rounded-full text-xs font-bold text-slate-600">
+              {ex.reps}
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div className="bg-orange-50 p-4 rounded-2xl border border-orange-100 flex gap-3">
+        <Info className="w-5 h-5 text-orange-500 shrink-0" />
+        <p className="text-sm text-orange-800">
+          <strong>Tip:</strong> Focus op vorm, niet op snelheid. Als het te makkelijk is, pak de band korter vast.
+        </p>
+      </div>
+    </div>
+  );
+
+  const renderList = () => (
+    <div className="space-y-6 animate-fade-in pb-24">
+      <div className="px-1 flex justify-between items-end">
+        <div>
+          <h1 className="text-3xl font-bold text-slate-900 mb-2">Boodschappen</h1>
+          <p className="text-slate-500">Jouw lijstje.</p>
+        </div>
+        {shoppingListItems.length > 0 && (
+          <button onClick={() => setShoppingListItems([])} className="text-red-500 text-xs font-bold flex items-center gap-1 bg-red-50 px-3 py-1.5 rounded-full">
+            <Trash2 className="w-3 h-3" /> Wis alles
+          </button>
+        )}
+      </div>
+
+      {shoppingListItems.length > 0 ? (
+        <div className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-hidden">
+          {shoppingListItems.map((item, idx) => (
+            <div key={idx} className="p-4 border-b border-slate-50 flex items-center gap-3 last:border-0">
+              <CheckCircle className="w-5 h-5 text-green-500" />
+              <span className="font-medium text-slate-700">{item}</span>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-12 bg-white rounded-3xl border border-dashed border-slate-200">
+          <ShoppingBasket className="w-12 h-12 text-slate-300 mx-auto mb-3" />
+          <p className="text-slate-400 font-medium">Je lijstje is leeg.</p>
+          <button onClick={() => setActiveTab('food')} className="mt-4 text-blue-600 font-bold text-sm hover:underline">
+            Bekijk recepten
+          </button>
+        </div>
+      )}
+
+      <div className="mt-8">
+        <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-4 px-1">Standaard Voorraad</h3>
+        <div className="grid grid-cols-1 gap-3">
+          {["Volkoren Pasta & Rijst", "Havermout & Wraps", "Noten & Pindakaas", "Diepvriesfruit & Groente"].map((item, i) => (
+            <div key={i} className="bg-slate-50 p-3 rounded-xl text-sm text-slate-600 font-medium flex items-center gap-2">
+              <div className="w-2 h-2 rounded-full bg-slate-300" /> {item}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen bg-slate-50 font-sans text-slate-800">
+      <div className="max-w-md mx-auto min-h-screen bg-white shadow-2xl overflow-hidden relative">
+        {/* Main Content Area */}
+        <div className="h-full overflow-y-auto p-5 no-scrollbar">
+          {activeTab === 'home' && renderHome()}
+          {activeTab === 'food' && renderFood()}
+          {activeTab === 'circuit' && renderCircuit()}
+          {activeTab === 'list' && renderList()}
+        </div>
+
+        {/* Bottom Navigation */}
+        <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+
+        {/* Recipe Modal */}
+        <Modal
+          isOpen={showRecipeModal}
+          onClose={() => setShowRecipeModal(false)}
+          title={selectedRecipe?.title || "Recept"}
+        >
+          {selectedRecipe && (
+            <div className="space-y-6">
+              <div className="flex gap-2 flex-wrap">
+                {selectedRecipe.tags.map(tag => (
+                  <span key={tag} className="text-xs bg-slate-100 text-slate-600 px-2.5 py-1 rounded-full font-medium">{tag}</span>
+                ))}
+                <span className="text-xs bg-blue-50 text-blue-600 px-2.5 py-1 rounded-full font-medium flex items-center gap-1">
+                  <Zap className="w-3 h-3" /> {selectedRecipe.time}
+                </span>
+              </div>
+
+              <div className="bg-green-50 p-4 rounded-xl border border-green-100">
+                <h4 className="font-bold text-green-900 text-sm mb-3">Ingrediënten</h4>
+                <ul className="space-y-2">
+                  {selectedRecipe.ingredients.map(ing => (
+                    <li key={ing} className="text-sm text-green-800 flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-green-400" /> {ing}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <h4 className="font-bold text-slate-900 text-sm mb-2">Bereiding</h4>
+                <p className="text-sm text-slate-600 leading-relaxed">{selectedRecipe.instructions}</p>
+              </div>
+
+              <button
+                onClick={addIngredientsToList}
+                className="w-full bg-green-600 hover:bg-green-700 text-white py-3.5 rounded-xl font-bold flex items-center justify-center gap-2 shadow-lg shadow-green-200 transition-transform active:scale-95"
+              >
+                <Plus className="w-5 h-5" /> Zet op Lijst
+              </button>
+            </div>
+          )}
+        </Modal>
+      </div>
     </div>
   );
 }
