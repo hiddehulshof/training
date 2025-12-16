@@ -1,7 +1,106 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Moon, Zap, Trophy, Dumbbell, Coffee, Info, ChevronLeft, ChevronRight, Utensils, CheckCircle, Droplets, Apple, Carrot, Beef, ShoppingBasket } from 'lucide-react';
+import { Calendar, Moon, Zap, Trophy, Dumbbell, Coffee, Info, ChevronLeft, ChevronRight, Utensils, CheckCircle, Droplets, Apple, Carrot, Beef, ShoppingBasket, Dices, Plus, Trash2 } from 'lucide-react';
 
 // --- DATA & LOGIC ---
+
+const RECIPES = [
+  {
+    id: 1,
+    title: "Snelle Pasta Pesto met Kip",
+    tags: ["Snel", "Eiwitrijk"],
+    time: "15 min",
+    ingredients: ["Volkoren Penne", "Kipfilet blokjes", "Groene Pesto", "Cherrytomaatjes", "Broccoli (diepvries)"],
+    instructions: "Kook pasta en broccoli. Bak kip goudbruin. Meng alles met pesto en gehalveerde tomaatjes."
+  },
+  {
+    id: 2,
+    title: "Boerenomelet op Brood",
+    tags: ["Lunch/Diner", "Vega"],
+    time: "10 min",
+    ingredients: ["4 Eieren", "Roerbakgroenten", "Volkoren Brood", "Geraspte 30+ kaas", "Scheutje melk"],
+    instructions: "Bak groenten kort aan. Kluts eieren met melk en giet erover. Bak tot gestold. Serveer op brood."
+  },
+  {
+    id: 3,
+    title: "Kip Wraps met Mais & Bonen",
+    tags: ["Peuterproof", "Eiwitrijk"],
+    time: "20 min",
+    ingredients: ["Volkoren Wraps", "Kipfilet of Vega stukjes", "Mais (blik)", "Kidneybonen", "Paprika", "Tomatenpuree"],
+    instructions: "Bak kip en paprika. Voeg mais, bonen en puree toe. Vul wraps en rol op. Even kort in de pan voor een krokant korstje."
+  },
+  {
+    id: 4,
+    title: "Zoete Aardappel Stamppot",
+    tags: ["Peuter Hit", "Vega"],
+    time: "25 min",
+    ingredients: ["Zoete Aardappels", "Spinazie (vers)", "Feta blokjes", "Pijnboompitten", "Vegetarische balletjes"],
+    instructions: "Kook aardappels gaar en stamp fijn. Roer rauwe spinazie en feta erdoor (slinkt door hitte). Serveer met balletjes."
+  },
+  {
+    id: 5,
+    title: "Traybake met Worstjes & Groente",
+    tags: ["Oven (Makkie)", "Weinig Afwas"],
+    time: "30 min",
+    ingredients: ["Krieltjes", "Kipworstjes", "Courgette", "Paprika", "Rode ui", "Italiaanse kruiden"],
+    instructions: "Snijd alles grof. Meng met olie en kruiden op bakplaat. 25 min in oven op 200gr."
+  },
+  {
+    id: 6,
+    title: "Vissticks met Doperwten-Puree",
+    tags: ["Peuterproof", "Vis"],
+    time: "20 min",
+    ingredients: ["Vissticks (oven)", "Aardappels", "Doperwten (diepvries)", "Viskruiden", "Kwark (ipv mayo)"],
+    instructions: "Bak vissticks in oven. Kook aardappels en doperwten. Stamp tot een groene puree. Super leuk voor kids!"
+  },
+  {
+    id: 7,
+    title: "Macaroni met 'Verstopte' Groenten",
+    tags: ["Peuterproof", "Prep"],
+    time: "20 min",
+    ingredients: ["Volkoren Macaroni", "Rundergehakt", "Courgette (geraspt)", "Wortel (geraspt)", "Passata (tomatensaus)"],
+    instructions: "Rul gehakt. Bak geraspte groenten mee (zijn onzichtbaar!). Voeg saus toe. Meng met gekookte macaroni."
+  },
+  {
+    id: 8,
+    title: "Oosterse Wok met Rijst",
+    tags: ["Snel", "Veel Groente"],
+    time: "15 min",
+    ingredients: ["Zilvervliesrijst", "Wokgroenten pakket", "Kip of Tofu", "Ketjap Manis (minder zout)", "Cashewnoten"],
+    instructions: "Kook rijst. Wok kip en groenten op hoog vuur. Blus af met scheutje ketjap. Bestrooi met noten."
+  },
+  {
+    id: 9,
+    title: "Gezonde Pannenkoeken Party",
+    tags: ["Papadag", "Lunch/Diner"],
+    time: "20 min",
+    ingredients: ["Volkorenmeel", "Eieren", "Halfvolle Melk", "Appel", "Kaneel", "Spekjes (optioneel)"],
+    instructions: "Maak beslag. Bak pannenkoeken met schijfjes appel en kaneel erin meegebakken."
+  },
+  {
+    id: 10,
+    title: "Broccoli-Courgette Soep",
+    tags: ["Vitamines", "Lunch/Diner"],
+    time: "20 min",
+    ingredients: ["Broccoli", "Courgette", "Bouillonblokje", "Kookroom (light)", "Stokbrood"],
+    instructions: "Kook groenten in bouillon gaar. Pureer met staafmixer. Voeg scheutje room toe. Lekker dippen met brood."
+  },
+  {
+    id: 11,
+    title: "Chili con Carne (Mild)",
+    tags: ["Prep", "Eiwitrijk"],
+    time: "25 min",
+    ingredients: ["Rundergehakt", "Bruine bonen", "Mais", "Paprika", "Tomatenblokjes", "Rijst"],
+    instructions: "Rul gehakt. Voeg groenten en bonen toe. Laat sudderen in tomatenblokjes. Serveer met rijst."
+  },
+  {
+    id: 12,
+    title: "Poké Bowl met Zalm (uit blik)",
+    tags: ["Koud", "Snel"],
+    time: "10 min",
+    ingredients: ["Rijst (afgekoeld)", "Zalm uit blik", "Komkommer", "Avocado", "Edamame boontjes", "Sojasaus"],
+    instructions: "Doe rijst in kom. Leg toppings er los bovenop. Sprenkel beetje sojasaus erover."
+  }
+];
 
 const SPECIAL_DATES = {
   "2025-12-20": { type: "match", title: "Wedstrijd Thuis", details: "vs BVC'73 (15:30)", icon: "trophy" },
@@ -198,6 +297,11 @@ export default function App() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showCircuit, setShowCircuit] = useState(false);
   const [showGroceryList, setShowGroceryList] = useState(false);
+  const [showRecipeModal, setShowRecipeModal] = useState(false);
+  
+  // Recipe Roulette State
+  const [selectedRecipe, setSelectedRecipe] = useState(null);
+  const [shoppingListItems, setShoppingListItems] = useState([]);
 
   const toISODate = (d) => d.toISOString().split('T')[0];
   const getDayName = (d) => d.toLocaleDateString('nl-NL', { weekday: 'long' });
@@ -216,6 +320,28 @@ export default function App() {
   };
   
   const resetToday = () => setCurrentDate(new Date());
+
+  // Logic to pick a random recipe
+  const spinRecipe = () => {
+    const random = RECIPES[Math.floor(Math.random() * RECIPES.length)];
+    setSelectedRecipe(random);
+    setShowRecipeModal(true);
+  };
+
+  // Logic to add ingredients to shopping list
+  const addIngredientsToList = () => {
+    if (selectedRecipe) {
+      // Avoid duplicates roughly
+      const newItems = selectedRecipe.ingredients.filter(item => !shoppingListItems.includes(item));
+      setShoppingListItems(prev => [...prev, ...newItems]);
+      setShowRecipeModal(false);
+      setShowGroceryList(true); // Open list to confirm
+    }
+  };
+
+  const clearCustomList = () => {
+      setShoppingListItems([]);
+  };
 
   const dateStr = toISODate(currentDate);
   const plan = getDayPlan(dateStr, currentDate.getDay());
@@ -240,25 +366,34 @@ export default function App() {
     <div className="min-h-screen bg-slate-50 font-sans text-slate-800 pb-12">
       {/* HEADER */}
       <header className="bg-blue-900 text-white p-4 shadow-lg sticky top-0 z-10">
-        <div className="max-w-md mx-auto flex justify-between items-center">
-          <div>
-            <h1 className="text-xl font-bold tracking-tight">Volleybal & Voeding</h1>
-            <p className="text-xs text-blue-200">Gezond eten = Beter spelen</p>
-          </div>
-          <div className="flex gap-2">
-            <button 
-                onClick={() => setShowGroceryList(true)}
-                className="text-xs bg-blue-800 hover:bg-blue-700 px-3 py-1 rounded-full transition flex items-center gap-1"
-            >
-                <ShoppingBasket className="w-3 h-3" /> Lijst
-            </button>
-            <button 
-                onClick={() => setShowCircuit(true)}
-                className="text-xs bg-blue-700 hover:bg-blue-600 px-3 py-1 rounded-full transition"
-            >
-                Mijn Circuit
-            </button>
-          </div>
+        <div className="max-w-md mx-auto flex flex-col gap-3">
+            <div className="flex justify-between items-center">
+              <div>
+                <h1 className="text-xl font-bold tracking-tight">Volleybal & Voeding</h1>
+                <p className="text-xs text-blue-200">Gezond eten = Beter spelen</p>
+              </div>
+              <button 
+                onClick={spinRecipe}
+                className="bg-yellow-400 hover:bg-yellow-300 text-yellow-900 px-3 py-2 rounded-full transition flex items-center gap-1 shadow-md font-bold text-xs animate-pulse"
+              >
+                <Dices className="w-4 h-4" /> Wat eten we?
+              </button>
+            </div>
+
+            <div className="flex gap-2 justify-center">
+                <button 
+                    onClick={() => setShowGroceryList(true)}
+                    className="text-xs bg-blue-800 hover:bg-blue-700 px-3 py-1.5 rounded-full transition flex items-center gap-1"
+                >
+                    <ShoppingBasket className="w-3 h-3" /> Lijst {shoppingListItems.length > 0 && `(${shoppingListItems.length})`}
+                </button>
+                <button 
+                    onClick={() => setShowCircuit(true)}
+                    className="text-xs bg-blue-700 hover:bg-blue-600 px-3 py-1.5 rounded-full transition"
+                >
+                    Mijn Circuit
+                </button>
+            </div>
         </div>
       </header>
 
@@ -391,56 +526,103 @@ export default function App() {
       {/* GROCERY LIST MODAL */}
       <Modal isOpen={showGroceryList} onClose={() => setShowGroceryList(false)}>
         <h2 className="text-xl font-bold mb-4 flex items-center gap-2">
-            <ShoppingBasket className="w-5 h-5 text-green-600" /> Basis Boodschappenlijst
+            <ShoppingBasket className="w-5 h-5 text-green-600" /> Boodschappenlijst
         </h2>
-        <p className="text-sm text-gray-500 mb-4">Zorg dat dit standaard in huis is voor snelle, gezonde maaltijden met het gezin.</p>
+
+        {/* Dynamic Items from Recipe */}
+        {shoppingListItems.length > 0 && (
+            <div className="mb-6 bg-yellow-50 p-4 rounded-lg border border-yellow-200">
+                <div className="flex justify-between items-center mb-2">
+                    <h3 className="text-sm font-bold text-yellow-800 uppercase">Toegevoegd voor Recept</h3>
+                    <button onClick={clearCustomList} className="text-xs text-red-500 flex items-center hover:underline"><Trash2 className="w-3 h-3 mr-1"/> Wis</button>
+                </div>
+                <ul className="text-sm space-y-2">
+                    {shoppingListItems.map((item, idx) => (
+                        <li key={idx} className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-green-500" />
+                            <span>{item}</span>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+        )}
 
         <div className="space-y-4">
             <div>
-                <h3 className="text-sm font-bold text-gray-700 uppercase mb-2 border-b">Voorraadkast (Lang houdbaar)</h3>
+                <h3 className="text-sm font-bold text-gray-700 uppercase mb-2 border-b">Voorraadkast (Basis)</h3>
                 <ul className="text-sm space-y-1 list-disc list-inside text-gray-600">
                     <li>Volkoren Pasta & Zilvervliesrijst</li>
-                    <li>Havermout (Snel ontbijt)</li>
-                    <li>Wraps (Volkoren, voor snelle pizza/lunch)</li>
-                    <li>Noten (Ongezouten) & Pindakaas (100%)</li>
-                    <li>Tomatenblokjes in blik (Basis voor saus)</li>
-                    <li>Peulvruchten (Linzen/Kikkererwten/Bonen)</li>
-                    <li>Tonijn in blik (op water)</li>
+                    <li>Havermout & Wraps</li>
+                    <li>Noten, Pindakaas & Peulvruchten</li>
+                    <li>Tomatenblokjes & Tonijn (blik)</li>
                 </ul>
             </div>
-
             <div>
-                <h3 className="text-sm font-bold text-gray-700 uppercase mb-2 border-b">Koelkast (Vers)</h3>
+                <h3 className="text-sm font-bold text-gray-700 uppercase mb-2 border-b">Vers & Koeling</h3>
                 <ul className="text-sm space-y-1 list-disc list-inside text-gray-600">
-                    <li>Magere Kwark (Eiwitbom!)</li>
-                    <li>Eieren (Altijd handig)</li>
-                    <li>Komkommer, Snoeptomaatjes, Worteltjes</li>
-                    <li>Hüttenkäse of Zuivelspread</li>
-                    <li>Humus (Gezond op brood/dip)</li>
+                    <li>Magere Kwark & Eieren</li>
+                    <li>Komkommer, Tomaten, Worteltjes</li>
+                    <li>Hüttenkäse & Humus</li>
                 </ul>
             </div>
-
-            <div>
-                <h3 className="text-sm font-bold text-gray-700 uppercase mb-2 border-b">Diepvries (De redding)</h3>
+             <div>
+                <h3 className="text-sm font-bold text-gray-700 uppercase mb-2 border-b">Diepvries & Snacks</h3>
                 <ul className="text-sm space-y-1 list-disc list-inside text-gray-600">
-                    <li>Diepvriesfruit (Voor smoothies/kwark)</li>
-                    <li>Diepvriesgroenten (Erwten, Broccoliroosjes, Spinazie)</li>
-                    <li>Kipfiletblokjes (Kant-en-klaar of zelf snijden)</li>
-                </ul>
-            </div>
-
-            <div>
-                <h3 className="text-sm font-bold text-gray-700 uppercase mb-2 border-b">Snacks & Sport</h3>
-                <ul className="text-sm space-y-1 list-disc list-inside text-gray-600">
-                    <li>Bananen (Energie voor training)</li>
-                    <li>Ontbijtkoek (Snelle koolhydraten)</li>
-                    <li>Rijstwafels</li>
+                    <li>Diepvriesfruit & Groenten (Erwten/Spinazie)</li>
+                    <li>Kipfiletblokjes</li>
+                    <li>Bananen & Ontbijtkoek</li>
                 </ul>
             </div>
         </div>
-
         <button onClick={() => setShowGroceryList(false)} className="mt-6 w-full bg-green-600 text-white py-2 rounded-lg font-semibold hover:bg-green-700">Sluiten</button>
       </Modal>
+
+      {/* RECIPE ROULETTE MODAL */}
+      <Modal isOpen={showRecipeModal} onClose={() => setShowRecipeModal(false)}>
+        {selectedRecipe && (
+            <div className="text-center">
+                <div className="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce">
+                    <span className="text-3xl">🍲</span>
+                </div>
+                <h2 className="text-xl font-bold text-gray-800 mb-1">{selectedRecipe.title}</h2>
+                <div className="flex justify-center gap-2 mb-4">
+                    {selectedRecipe.tags.map(tag => (
+                        <span key={tag} className="text-xs bg-gray-100 text-gray-600 px-2 py-1 rounded-full">{tag}</span>
+                    ))}
+                    <span className="text-xs bg-blue-100 text-blue-600 px-2 py-1 rounded-full">⏱ {selectedRecipe.time}</span>
+                </div>
+
+                <div className="bg-green-50 p-4 rounded-lg text-left mb-4 border border-green-100">
+                    <h3 className="font-bold text-green-800 text-sm mb-2">Ingrediënten:</h3>
+                    <ul className="text-sm text-gray-700 list-disc list-inside">
+                        {selectedRecipe.ingredients.map(ing => <li key={ing}>{ing}</li>)}
+                    </ul>
+                </div>
+
+                <div className="text-left mb-6">
+                    <h3 className="font-bold text-gray-800 text-sm mb-1">Zo maak je het:</h3>
+                    <p className="text-sm text-gray-600 leading-relaxed">{selectedRecipe.instructions}</p>
+                </div>
+
+                <div className="space-y-3">
+                    <button 
+                        onClick={addIngredientsToList}
+                        className="w-full bg-green-600 hover:bg-green-700 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2 shadow-sm"
+                    >
+                        <Plus className="w-5 h-5" /> Zet op Boodschappenlijst
+                    </button>
+                    
+                    <button 
+                        onClick={spinRecipe}
+                        className="w-full bg-white border-2 border-yellow-400 text-yellow-700 hover:bg-yellow-50 py-2 rounded-xl font-bold flex items-center justify-center gap-2"
+                    >
+                        <Dices className="w-4 h-4" /> Ander Recept
+                    </button>
+                </div>
+            </div>
+        )}
+      </Modal>
+
     </div>
   );
 }
