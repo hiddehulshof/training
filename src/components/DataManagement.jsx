@@ -263,20 +263,47 @@ export default function DataManagement({ isOpen, onClose, onDataChanged }) {
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">OpenRouter API Key</label>
-                                        <input name="openai_api_key" type="password" defaultValue={editingItem?.openai_api_key} placeholder="sk-or-..." className="w-full p-2 border border-slate-200 rounded-lg" />
+                                        <input
+                                            name="openai_api_key"
+                                            type="password"
+                                            value={editingItem?.openai_api_key || ''}
+                                            onChange={(e) => setEditingItem({ ...editingItem, openai_api_key: e.target.value })}
+                                            placeholder="sk-or-..."
+                                            className="w-full p-2 border border-slate-200 rounded-lg"
+                                        />
                                     </div>
                                     <div>
                                         <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Dagelijks Calorie Doel (kcal)</label>
-                                        <input name="calorie_goal" type="number" defaultValue={editingItem?.calorie_goal || 2500} className="w-full p-2 border border-slate-200 rounded-lg" />
+                                        <input
+                                            name="calorie_goal"
+                                            type="number"
+                                            value={editingItem?.calorie_goal || 2500}
+                                            onChange={(e) => setEditingItem({ ...editingItem, calorie_goal: e.target.value })}
+                                            className="w-full p-2 border border-slate-200 rounded-lg"
+                                        />
                                     </div>
                                     <div className="grid grid-cols-2 gap-4">
                                         <div>
                                             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Lengte (cm)</label>
-                                            <input name="user_height" type="number" defaultValue={editingItem?.user_height} placeholder="185" className="w-full p-2 border border-slate-200 rounded-lg" />
+                                            <input
+                                                name="user_height"
+                                                type="number"
+                                                value={editingItem?.user_height || ''}
+                                                onChange={(e) => setEditingItem({ ...editingItem, user_height: e.target.value })}
+                                                placeholder="185"
+                                                className="w-full p-2 border border-slate-200 rounded-lg"
+                                            />
                                         </div>
                                         <div>
                                             <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Gewicht (kg)</label>
-                                            <input name="user_weight" type="number" defaultValue={editingItem?.user_weight} placeholder="80" className="w-full p-2 border border-slate-200 rounded-lg" />
+                                            <input
+                                                name="user_weight"
+                                                type="number"
+                                                value={editingItem?.user_weight || ''}
+                                                onChange={(e) => setEditingItem({ ...editingItem, user_weight: e.target.value })}
+                                                placeholder="80"
+                                                className="w-full p-2 border border-slate-200 rounded-lg"
+                                            />
                                         </div>
                                     </div>
                                     <div className="pt-4 border-t border-slate-100">
@@ -295,15 +322,33 @@ export default function DataManagement({ isOpen, onClose, onDataChanged }) {
                                         <div className="grid grid-cols-3 gap-3">
                                             <div>
                                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Eiwit (g)</label>
-                                                <input name="protein_goal" type="number" defaultValue={editingItem?.protein_goal} className="w-full p-2 border border-slate-200 rounded-lg" />
+                                                <input
+                                                    name="protein_goal"
+                                                    type="number"
+                                                    value={editingItem?.protein_goal || ''}
+                                                    onChange={(e) => setEditingItem({ ...editingItem, protein_goal: e.target.value })}
+                                                    className="w-full p-2 border border-slate-200 rounded-lg"
+                                                />
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Koolh (g)</label>
-                                                <input name="carbs_goal" type="number" defaultValue={editingItem?.carbs_goal} className="w-full p-2 border border-slate-200 rounded-lg" />
+                                                <input
+                                                    name="carbs_goal"
+                                                    type="number"
+                                                    value={editingItem?.carbs_goal || ''}
+                                                    onChange={(e) => setEditingItem({ ...editingItem, carbs_goal: e.target.value })}
+                                                    className="w-full p-2 border border-slate-200 rounded-lg"
+                                                />
                                             </div>
                                             <div>
                                                 <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Vet (g)</label>
-                                                <input name="fat_goal" type="number" defaultValue={editingItem?.fat_goal} className="w-full p-2 border border-slate-200 rounded-lg" />
+                                                <input
+                                                    name="fat_goal"
+                                                    type="number"
+                                                    value={editingItem?.fat_goal || ''}
+                                                    onChange={(e) => setEditingItem({ ...editingItem, fat_goal: e.target.value })}
+                                                    className="w-full p-2 border border-slate-200 rounded-lg"
+                                                />
                                             </div>
                                         </div>
                                     </div>
