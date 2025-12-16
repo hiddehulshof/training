@@ -6,6 +6,7 @@ import {
   Home, List, Activity, X, ChefHat, ArrowRight
 } from 'lucide-react';
 
+
 // --- DATA & LOGIC ---
 const RECIPES = [
   {
@@ -471,7 +472,7 @@ const Modal = ({ isOpen, onClose, title, children }) => {
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center pointer-events-none">
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm transition-opacity pointer-events-auto" onClick={onClose} />
-      <div className="bg-white w-full max-w-md mx-auto rounded-t-2xl sm:rounded-2xl shadow-2xl transform transition-transform duration-300 pointer-events-auto max-h-[90vh] flex flex-col">
+      <div className="bg-white w-full max-w-md mx-auto rounded-t-2xl sm:rounded-2xl shadow-2xl transform transition-transform duration-300 pointer-events-auto max-h-[90vh] flex flex-col relative z-10">
         <div className="p-4 border-b border-slate-100 flex justify-between items-center shrink-0">
           <h3 className="font-bold text-lg text-slate-800">{title}</h3>
           <button onClick={onClose} className="p-2 bg-slate-100 rounded-full hover:bg-slate-200 transition">
