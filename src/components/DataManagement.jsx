@@ -59,13 +59,14 @@ export default function DataManagement({ isOpen, onClose, onDataChanged }) {
     const handleGenerateGoals = async () => {
         setIsGenerating(true);
         try {
-            const apiKey = await getSetting('openai_api_key');
-            const height = await getSetting('user_height');
-            const weight = await getSetting('user_weight');
+            // Use current form values, not just saved ones
+            const apiKey = editingItem?.openai_api_key;
+            const height = editingItem?.user_height;
+            const weight = editingItem?.user_weight;
             const schedule = await getAll('events');
 
             if (!apiKey || !height || !weight) {
-                alert("Vul eerst je API key, lengte en gewicht in en sla op.");
+                alert("Vul eerst je API key, lengte en gewicht in.");
                 return;
             }
 
