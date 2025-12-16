@@ -1,14 +1,20 @@
 import React, { useState, useEffect } from 'react';
+import { seedDatabase, getAll, getSetting, putSetting } from './db';
 import {
   Calendar, Moon, Zap, Trophy, Dumbbell, Coffee, Info,
   ChevronLeft, ChevronRight, Utensils, CheckCircle, Droplets,
+  ArrowRight, Settings,
   Apple, Carrot, Beef, ShoppingBasket, Dices, Plus, Trash2,
-  Home, List, Activity, X, ChefHat, ArrowRight
+  Home, List, Activity, X, ChefHat
 } from 'lucide-react';
-
+import DataManagement from './components/DataManagement';
+import CalorieTracker from './components/CalorieTracker';
 
 // --- DATA & LOGIC ---
-const RECIPES = [
+
+// --- DATA & LOGIC ---
+// Exported for usage in App but also seeding in db.js
+export const RECIPES = [
   {
     id: 1,
     title: "Snelle Pasta Pesto met Kip",
@@ -104,154 +110,10 @@ const RECIPES = [
     time: "10 min",
     ingredients: ["Rijst (afgekoeld)", "Zalm uit blik", "Komkommer", "Avocado", "Edamame boontjes", "Sojasaus"],
     instructions: "Doe rijst in kom. Leg toppings er los bovenop. Sprenkel beetje sojasaus erover."
-  },
-  {
-    id: 13,
-    title: "Gnocchi Traybake",
-    tags: ["Oven (Makkie)", "Vega"],
-    time: "25 min",
-    ingredients: ["Gnocchi (vers)", "Courgette", "Rode Paprika", "Mozzarella bolletjes", "Pesto rood"],
-    instructions: "Meng gnocchi en gesneden groente met pesto op de bakplaat. 20 min in oven op 200gr. Laatste 5 min mozzarella erover."
-  },
-  {
-    id: 14,
-    title: "Snelle Pita Pizza's",
-    tags: ["Peuter Hit", "Snel"],
-    time: "15 min",
-    ingredients: ["Volkoren pita broodjes", "Tomatenpuree", "Salami of Ham", "Paprika reepjes", "Geraspte kaas"],
-    instructions: "Snijd pita's open. Besmeer met puree. Beleg met toppings en kaas. 8 min in de oven tot kaas smelt."
-  },
-  {
-    id: 15,
-    title: "Romige Pasta met Zalm & Spinazie",
-    tags: ["Vis", "Snel"],
-    time: "15 min",
-    ingredients: ["Tagliatelle", "Gerookte zalmsnippers", "Kruidenkaas (Boursin)", "Verse spinazie", "Cherrytomaatjes"],
-    instructions: "Kook pasta. Verwarm kruidenkaas in een wok, voeg spinazie toe tot het slinkt. Roer zalm en pasta erdoor."
-  },
-  {
-    id: 16,
-    title: "Milde Kip Korma Curry",
-    tags: ["Wereldgerecht", "Rijst"],
-    time: "20 min",
-    ingredients: ["Kipfilet", "Korma boemboe (mild)", "Kokosmelk", "Sperziebonen", "Zilvervliesrijst"],
-    instructions: "Kook rijst en bonen. Bak kip goudbruin. Voeg boemboe en kokosmelk toe. Laat even pruttelen met de bonen."
-  },
-  {
-    id: 17,
-    title: "Broodje Hamburger (Gezond)",
-    tags: ["Weekend", "Vlees"],
-    time: "20 min",
-    ingredients: ["Tartaartjes", "Volkoren bollen", "IJsbergsla", "Komkommer", "Saus naar keuze"],
-    instructions: "Bak tartaartjes gaar. Snijd broodjes open. Beleg met veel groenten, het vlees en een klein beetje saus."
-  },
-  {
-    id: 18,
-    title: "Couscous Salade met Feta",
-    tags: ["Koud", "Lunch/Diner"],
-    time: "10 min",
-    ingredients: ["Couscous", "Komkommer", "Feta blokjes", "Rozijnen", "Munt (vers)"],
-    instructions: "Wel de couscous in heet water (5 min). Snijd groente en munt fijn. Meng alles door elkaar. Lekker fris!"
-  },
-  {
-    id: 19,
-    title: "Chinese Tomatensoep (Kidsproof)",
-    tags: ["Soep", "Zoet"],
-    time: "20 min",
-    ingredients: ["Gezeefde tomaten", "Kipfilet (gekookt)", "Taugé", "Chinese Mie", "Appelmoes (geheim)"],
-    instructions: "Verwarm tomaten met bouillon. Roer lepel appelmoes erdoor voor het zoetje. Voeg mie, kip en taugé toe."
-  },
-  {
-    id: 20,
-    title: "Quesadillas met Avocado",
-    tags: ["Vega", "Lunch"],
-    time: "15 min",
-    ingredients: ["Wraps", "Cheddar kaas", "Avocado", "Bosui", "Mais"],
-    instructions: "Prak avocado. Smeer op wrap, strooi kaas, mais en ui erover. Dek af met 2e wrap. Bak in koekenpan aan beide kanten."
-  },
-  {
-    id: 21,
-    title: "Orzo 'Risotto' met Champignons",
-    tags: ["One-pot", "Vega"],
-    time: "20 min",
-    ingredients: ["Orzo (pasta)", "Champignons", "Bouillonblokje", "Parmezaanse kaas", "Doperwten"],
-    instructions: "Bak champignons. Voeg orzo en bouillon toe. Kook droog als rijst. Roer op het eind kaas en doperwten erdoor."
-  },
-  {
-    id: 22,
-    title: "Kabeljauw met Spek uit de Oven",
-    tags: ["Vis", "Oven (Makkie)"],
-    time: "25 min",
-    ingredients: ["Kabeljauwfilet", "Ontbijtspek", "Krieltjes", "Broccoli", "Citroen"],
-    instructions: "Wikkel vis in spek. Leg met krieltjes en broccoli op bakplaat. Besprenkel met olie. 20 min in oven op 200gr."
-  },
-  {
-    id: 23,
-    title: "Falafel Wraps met Yoghurt",
-    tags: ["Vega", "Snel"],
-    time: "15 min",
-    ingredients: ["Falafel balletjes", "Volkoren Wraps", "Rode kool (pot)", "Griekse Yoghurt", "Knoflook"],
-    instructions: "Bak falafel krokant. Maak sausje van yoghurt/knoflook. Vul wraps met kool, falafel en saus."
-  },
-  {
-    id: 24,
-    title: "Rösti Ovenschotel met Prei",
-    tags: ["Comfort", "Oven"],
-    time: "35 min",
-    ingredients: ["Rösti rondjes (diepvries)", "Prei", "Spekjes", "Crème fraîche", "Geraspte kaas"],
-    instructions: "Bak spekjes en prei. Meng met crème fraîche. Doe in ovenschaal, dek af met rösti rondjes en kaas. 25 min oven."
-  },
-  {
-    id: 25,
-    title: "Snelle Nasi met Saté",
-    tags: ["Prep", "Aziatisch"],
-    time: "20 min",
-    ingredients: ["Witte rijst (afgekoeld)", "Nasi groentepakket", "Eieren", "Kant-en-klare satéstokjes", "Kroepoek"],
-    instructions: "Bak groenten. Voeg rijst toe en bak op hoog vuur. Kluts ei erdoorheen (scramble). Serveer met opgewarmde saté."
-  },
-  {
-    id: 26,
-    title: "Tortilla Taart",
-    tags: ["Feestje", "Oven"],
-    time: "30 min",
-    ingredients: ["Wraps", "Rundergehakt", "Bonen in tomatensaus", "Mais", "Geraspte kaas"],
-    instructions: "Rul gehakt met bonen/mais. Stapel in springvorm: wrap, saus, wrap, saus. Eindig met kaas. 15 min in oven."
-  },
-  {
-    id: 27,
-    title: "Teriyaki Noedels met Biefstuk",
-    tags: ["Snel", "Luxe"],
-    time: "15 min",
-    ingredients: ["Woknoedels", "Biefstukpuntjes", "Broccoli roosjes", "Teriyaki saus", "Sesamzaadjes"],
-    instructions: "Wok biefstuk en broccoli hard en snel. Voeg saus en noedels toe (direct uit pak). Bestrooi met sesam."
-  },
-  {
-    id: 28,
-    title: "Maaltijdsalade Geitenkaas",
-    tags: ["Koud", "Vega"],
-    time: "10 min",
-    ingredients: ["Gemengde sla", "Geitenkaas rondjes", "Walnoten", "Honing", "Appel"],
-    instructions: "Doe sla in kom. Snijd appel in partjes. Verdeel kaas en noten. Besprenkel royaal met honing."
-  },
-  {
-    id: 29,
-    title: "Spruitjesstamppot met Spekjes",
-    tags: ["Winter", "Hollandse pot"],
-    time: "25 min",
-    ingredients: ["Aardappels", "Spruitjes (geschoond)", "Spekjes", "Melk", "Mosterd"],
-    instructions: "Kook aardappels en spruitjes samen gaar. Bak spekjes uit. Stamp alles met scheutje melk en lepel mosterd."
-  },
-  {
-    id: 30,
-    title: "Shakshuka (Eieren in Saus)",
-    tags: ["Vega", "Eiwitrijk"],
-    time: "20 min",
-    ingredients: ["Eieren", "Paprika", "Tomatenblokjes (blik)", "Ui", "Komijnpoeder"],
-    instructions: "Fruit ui en paprika. Voeg tomaat en kruiden toe. Maak kuiltjes in saus, breek eieren erin. Deksel erop tot ei stolt."
   }
 ];
 
-const SPECIAL_DATES = {
+export const SPECIAL_DATES = {
   "2025-12-20": { type: "match", title: "Wedstrijd Thuis", details: "vs BVC'73 (15:30)", icon: "trophy" },
   "2025-12-24": { type: "rest", title: "Kerstavond", details: "Geniet ervan!", icon: "coffee" },
   "2025-12-25": { type: "rest", title: "1e Kerstdag", details: "Eet veel (brandstof)", icon: "coffee" },
@@ -277,6 +139,15 @@ const SPECIAL_DATES = {
   "2026-04-04": { type: "power", title: "Power Training", details: "Paasweekend knallen", icon: "zap" },
   "2026-04-11": { type: "match", title: "Wedstrijd Thuis", details: "vs Elite/Dynamo (15:30) - LAATSTE!", icon: "trophy" },
 };
+
+export const CIRCUIT_EXERCISES = [
+  { id: 1, title: "Banded Squats", reps: "15x", desc: "Op band staan, uiteinden bij schouders." },
+  { id: 2, title: "Jump Squats", reps: "8-10x", desc: "Explosief omhoog, zacht landen!" },
+  { id: 3, title: "Band Pull-Aparts", reps: "15-20x", desc: "Armen gestrekt, band naar borst trekken." },
+  { id: 4, title: "Monster Walks", reps: "20 stap", desc: "Links/rechts. Band om enkels/knieën." },
+  { id: 5, title: "Overhead Press", reps: "10-12x", desc: "Op band staan, uitduwen boven hoofd." },
+  { id: 6, title: "Plank", reps: "45-60s", desc: "Navel intrekken. Rug recht." },
+];
 
 const getRoutinePlan = (dayIndex) => {
   switch (dayIndex) {
@@ -370,8 +241,8 @@ const getDetailedNutrition = (dayIndex, activityType) => {
   }
 };
 
-const getDayPlan = (dateStr, dayIndex) => {
-  let basePlan = SPECIAL_DATES[dateStr] ? SPECIAL_DATES[dateStr] : getRoutinePlan(dayIndex);
+const getDayPlan = (dateStr, dayIndex, events) => {
+  let basePlan = (events && events[dateStr]) ? events[dateStr] : getRoutinePlan(dayIndex);
   const nutrition = getDetailedNutrition(dayIndex, basePlan.type);
   return { ...basePlan, nutrition };
 };
@@ -529,20 +400,67 @@ export default function App() {
   const [selectedRecipe, setSelectedRecipe] = useState(null);
 
   // Data State
+  const [recipes, setRecipes] = useState([]);
+  const [events, setEvents] = useState({});
+  const [exercises, setExercises] = useState([]);
   const [habits, setHabits] = useState({ water: false, fruit: false, veggies: false, protein: false });
   const [shoppingListItems, setShoppingListItems] = useState([]);
+  const [showAdminModal, setShowAdminModal] = useState(false);
+
+  // Load Data from DB
+  const loadData = async () => {
+    await seedDatabase();
+
+    // Load Recipes
+    const allRecipes = await getAll('recipes');
+    if (allRecipes.length > 0) setRecipes(allRecipes);
+    else setRecipes(RECIPES); // Fallback to hardcoded if simple array from import
+
+    // Load Events
+    const allEvents = await getAll('events');
+    if (allEvents.length > 0) {
+      // Convert array back to object for keyed access
+      const eventsObj = allEvents.reduce((acc, curr) => ({ ...acc, [curr.date]: curr }), {});
+      setEvents(eventsObj);
+    } else {
+      setEvents(SPECIAL_DATES);
+    }
+
+    // Load Exercises
+    const allExercises = await getAll('exercises');
+    if (allExercises.length > 0) setExercises(allExercises);
+    else setExercises(CIRCUIT_EXERCISES);
+
+    // Load Settings
+    const savedHabits = await getSetting('habits');
+    if (savedHabits) setHabits(savedHabits);
+
+    const savedList = await getSetting('shoppingList');
+    if (savedList) setShoppingListItems(savedList);
+  };
+
+  useEffect(() => {
+    loadData();
+  }, []);
 
   // Helpers
   const toISODate = (d) => d.toISOString().split('T')[0];
   const dateStr = toISODate(currentDate);
-  const plan = getDayPlan(dateStr, currentDate.getDay());
+  const plan = getDayPlan(dateStr, currentDate.getDay(), events);
   const theme = getTheme(plan.type);
   const isToday = toISODate(new Date()) === dateStr;
 
-  const toggleHabit = (key) => setHabits(prev => ({ ...prev, [key]: !prev[key] }));
+  const toggleHabit = (key) => {
+    setHabits(prev => {
+      const newState = { ...prev, [key]: !prev[key] };
+      putSetting('habits', newState); // Persist
+      return newState;
+    });
+  };
 
   const spinRecipe = () => {
-    const random = RECIPES[Math.floor(Math.random() * RECIPES.length)];
+    const list = recipes.length > 0 ? recipes : RECIPES;
+    const random = list[Math.floor(Math.random() * list.length)];
     setSelectedRecipe(random);
     setShowRecipeModal(true);
   };
@@ -550,10 +468,19 @@ export default function App() {
   const addIngredientsToList = () => {
     if (selectedRecipe) {
       const newItems = selectedRecipe.ingredients.filter(item => !shoppingListItems.includes(item));
-      setShoppingListItems(prev => [...prev, ...newItems]);
+      setShoppingListItems(prev => {
+        const updatedList = [...prev, ...newItems];
+        putSetting('shoppingList', updatedList); // Persist
+        return updatedList;
+      });
       setShowRecipeModal(false);
       setActiveTab('list'); // Switch to list tab
     }
+  };
+
+  const clearList = () => {
+    setShoppingListItems([]);
+    putSetting('shoppingList', []);
   };
 
   // Views
@@ -565,9 +492,14 @@ export default function App() {
           <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">{currentDate.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
           <h1 className="text-3xl font-bold text-slate-900">Hoi, Hidde 👋</h1>
         </div>
-        <button onClick={() => setCurrentDate(new Date())} className={`p-2 rounded-full transition ${isToday ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
-          <Calendar className="w-6 h-6" />
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => setShowAdminModal(true)} className="p-2 rounded-full bg-slate-100 text-slate-400 hover:text-slate-600 transition">
+            <Settings className="w-6 h-6" />
+          </button>
+          <button onClick={() => setCurrentDate(new Date())} className={`p-2 rounded-full transition ${isToday ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
+            <Calendar className="w-6 h-6" />
+          </button>
+        </div>
       </div>
 
       {/* Week Strip */}
@@ -647,6 +579,8 @@ export default function App() {
         <p className="text-slate-500">Brandstof voor je prestaties.</p>
       </div>
 
+      <CalorieTracker />
+
       {/* Daily Plan Card */}
       <div className="bg-green-50 rounded-3xl p-6 border border-green-100 relative overflow-hidden">
         <div className="absolute top-0 right-0 p-4 opacity-5">
@@ -696,7 +630,7 @@ export default function App() {
       {/* Popular Recipes List */}
       <div className="space-y-3">
         <h3 className="text-lg font-bold text-slate-800 px-1">Favorieten</h3>
-        {RECIPES.slice(0, 3).map(r => (
+        {recipes.slice(0, 3).map(r => (
           <RecipeCard key={r.id} recipe={r} onClick={() => { setSelectedRecipe(r); setShowRecipeModal(true); }} />
         ))}
       </div>
@@ -711,14 +645,7 @@ export default function App() {
       </div>
 
       <div className="space-y-3">
-        {[
-          { id: 1, title: "Banded Squats", reps: "15x", desc: "Op band staan, uiteinden bij schouders." },
-          { id: 2, title: "Jump Squats", reps: "8-10x", desc: "Explosief omhoog, zacht landen!" },
-          { id: 3, title: "Band Pull-Aparts", reps: "15-20x", desc: "Armen gestrekt, band naar borst trekken." },
-          { id: 4, title: "Monster Walks", reps: "20 stap", desc: "Links/rechts. Band om enkels/knieën." },
-          { id: 5, title: "Overhead Press", reps: "10-12x", desc: "Op band staan, uitduwen boven hoofd." },
-          { id: 6, title: "Plank", reps: "45-60s", desc: "Navel intrekken. Rug recht." },
-        ].map((ex) => (
+        {exercises.map((ex) => (
           <div key={ex.id} className="bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex gap-4 items-center">
             <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 font-bold text-xl flex items-center justify-center shrink-0">
               {ex.id}
@@ -751,7 +678,7 @@ export default function App() {
           <p className="text-slate-500">Jouw lijstje.</p>
         </div>
         {shoppingListItems.length > 0 && (
-          <button onClick={() => setShoppingListItems([])} className="text-red-500 text-xs font-bold flex items-center gap-1 bg-red-50 px-3 py-1.5 rounded-full">
+          <button onClick={clearList} className="text-red-500 text-xs font-bold flex items-center gap-1 bg-red-50 px-3 py-1.5 rounded-full">
             <Trash2 className="w-3 h-3" /> Wis alles
           </button>
         )}
@@ -802,6 +729,13 @@ export default function App() {
 
         {/* Bottom Navigation */}
         <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
+
+        {/* Admin Modal */}
+        <DataManagement
+          isOpen={showAdminModal}
+          onClose={() => setShowAdminModal(false)}
+          onDataChanged={loadData}
+        />
 
         {/* Recipe Modal */}
         <Modal
