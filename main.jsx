@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { Calendar, Moon, Zap, Trophy, Dumbbell, Coffee, Info, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // --- DATA & LOGIC ---
-
 // De vaste wedstrijden en uitzonderingen (Hardcoded)
 const SPECIAL_DATES = {
   "2025-12-20": { type: "match", title: "Wedstrijd Thuis", details: "vs BVC'73 (15:30)", icon: "trophy" },
