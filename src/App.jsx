@@ -99,6 +99,150 @@ const RECIPES = [
     time: "10 min",
     ingredients: ["Rijst (afgekoeld)", "Zalm uit blik", "Komkommer", "Avocado", "Edamame boontjes", "Sojasaus"],
     instructions: "Doe rijst in kom. Leg toppings er los bovenop. Sprenkel beetje sojasaus erover."
+  },
+  {
+    id: 13,
+    title: "Gnocchi Traybake",
+    tags: ["Oven (Makkie)", "Vega"],
+    time: "25 min",
+    ingredients: ["Gnocchi (vers)", "Courgette", "Rode Paprika", "Mozzarella bolletjes", "Pesto rood"],
+    instructions: "Meng gnocchi en gesneden groente met pesto op de bakplaat. 20 min in oven op 200gr. Laatste 5 min mozzarella erover."
+  },
+  {
+    id: 14,
+    title: "Snelle Pita Pizza's",
+    tags: ["Peuter Hit", "Snel"],
+    time: "15 min",
+    ingredients: ["Volkoren pita broodjes", "Tomatenpuree", "Salami of Ham", "Paprika reepjes", "Geraspte kaas"],
+    instructions: "Snijd pita's open. Besmeer met puree. Beleg met toppings en kaas. 8 min in de oven tot kaas smelt."
+  },
+  {
+    id: 15,
+    title: "Romige Pasta met Zalm & Spinazie",
+    tags: ["Vis", "Snel"],
+    time: "15 min",
+    ingredients: ["Tagliatelle", "Gerookte zalmsnippers", "Kruidenkaas (Boursin)", "Verse spinazie", "Cherrytomaatjes"],
+    instructions: "Kook pasta. Verwarm kruidenkaas in een wok, voeg spinazie toe tot het slinkt. Roer zalm en pasta erdoor."
+  },
+  {
+    id: 16,
+    title: "Milde Kip Korma Curry",
+    tags: ["Wereldgerecht", "Rijst"],
+    time: "20 min",
+    ingredients: ["Kipfilet", "Korma boemboe (mild)", "Kokosmelk", "Sperziebonen", "Zilvervliesrijst"],
+    instructions: "Kook rijst en bonen. Bak kip goudbruin. Voeg boemboe en kokosmelk toe. Laat even pruttelen met de bonen."
+  },
+  {
+    id: 17,
+    title: "Broodje Hamburger (Gezond)",
+    tags: ["Weekend", "Vlees"],
+    time: "20 min",
+    ingredients: ["Tartaartjes", "Volkoren bollen", "IJsbergsla", "Komkommer", "Saus naar keuze"],
+    instructions: "Bak tartaartjes gaar. Snijd broodjes open. Beleg met veel groenten, het vlees en een klein beetje saus."
+  },
+  {
+    id: 18,
+    title: "Couscous Salade met Feta",
+    tags: ["Koud", "Lunch/Diner"],
+    time: "10 min",
+    ingredients: ["Couscous", "Komkommer", "Feta blokjes", "Rozijnen", "Munt (vers)"],
+    instructions: "Wel de couscous in heet water (5 min). Snijd groente en munt fijn. Meng alles door elkaar. Lekker fris!"
+  },
+  {
+    id: 19,
+    title: "Chinese Tomatensoep (Kidsproof)",
+    tags: ["Soep", "Zoet"],
+    time: "20 min",
+    ingredients: ["Gezeefde tomaten", "Kipfilet (gekookt)", "Taugé", "Chinese Mie", "Appelmoes (geheim)"],
+    instructions: "Verwarm tomaten met bouillon. Roer lepel appelmoes erdoor voor het zoetje. Voeg mie, kip en taugé toe."
+  },
+  {
+    id: 20,
+    title: "Quesadillas met Avocado",
+    tags: ["Vega", "Lunch"],
+    time: "15 min",
+    ingredients: ["Wraps", "Cheddar kaas", "Avocado", "Bosui", "Mais"],
+    instructions: "Prak avocado. Smeer op wrap, strooi kaas, mais en ui erover. Dek af met 2e wrap. Bak in koekenpan aan beide kanten."
+  },
+  {
+    id: 21,
+    title: "Orzo 'Risotto' met Champignons",
+    tags: ["One-pot", "Vega"],
+    time: "20 min",
+    ingredients: ["Orzo (pasta)", "Champignons", "Bouillonblokje", "Parmezaanse kaas", "Doperwten"],
+    instructions: "Bak champignons. Voeg orzo en bouillon toe. Kook droog als rijst. Roer op het eind kaas en doperwten erdoor."
+  },
+  {
+    id: 22,
+    title: "Kabeljauw met Spek uit de Oven",
+    tags: ["Vis", "Oven (Makkie)"],
+    time: "25 min",
+    ingredients: ["Kabeljauwfilet", "Ontbijtspek", "Krieltjes", "Broccoli", "Citroen"],
+    instructions: "Wikkel vis in spek. Leg met krieltjes en broccoli op bakplaat. Besprenkel met olie. 20 min in oven op 200gr."
+  },
+  {
+    id: 23,
+    title: "Falafel Wraps met Yoghurt",
+    tags: ["Vega", "Snel"],
+    time: "15 min",
+    ingredients: ["Falafel balletjes", "Volkoren Wraps", "Rode kool (pot)", "Griekse Yoghurt", "Knoflook"],
+    instructions: "Bak falafel krokant. Maak sausje van yoghurt/knoflook. Vul wraps met kool, falafel en saus."
+  },
+  {
+    id: 24,
+    title: "Rösti Ovenschotel met Prei",
+    tags: ["Comfort", "Oven"],
+    time: "35 min",
+    ingredients: ["Rösti rondjes (diepvries)", "Prei", "Spekjes", "Crème fraîche", "Geraspte kaas"],
+    instructions: "Bak spekjes en prei. Meng met crème fraîche. Doe in ovenschaal, dek af met rösti rondjes en kaas. 25 min oven."
+  },
+  {
+    id: 25,
+    title: "Snelle Nasi met Saté",
+    tags: ["Prep", "Aziatisch"],
+    time: "20 min",
+    ingredients: ["Witte rijst (afgekoeld)", "Nasi groentepakket", "Eieren", "Kant-en-klare satéstokjes", "Kroepoek"],
+    instructions: "Bak groenten. Voeg rijst toe en bak op hoog vuur. Kluts ei erdoorheen (scramble). Serveer met opgewarmde saté."
+  },
+  {
+    id: 26,
+    title: "Tortilla Taart",
+    tags: ["Feestje", "Oven"],
+    time: "30 min",
+    ingredients: ["Wraps", "Rundergehakt", "Bonen in tomatensaus", "Mais", "Geraspte kaas"],
+    instructions: "Rul gehakt met bonen/mais. Stapel in springvorm: wrap, saus, wrap, saus. Eindig met kaas. 15 min in oven."
+  },
+  {
+    id: 27,
+    title: "Teriyaki Noedels met Biefstuk",
+    tags: ["Snel", "Luxe"],
+    time: "15 min",
+    ingredients: ["Woknoedels", "Biefstukpuntjes", "Broccoli roosjes", "Teriyaki saus", "Sesamzaadjes"],
+    instructions: "Wok biefstuk en broccoli hard en snel. Voeg saus en noedels toe (direct uit pak). Bestrooi met sesam."
+  },
+  {
+    id: 28,
+    title: "Maaltijdsalade Geitenkaas",
+    tags: ["Koud", "Vega"],
+    time: "10 min",
+    ingredients: ["Gemengde sla", "Geitenkaas rondjes", "Walnoten", "Honing", "Appel"],
+    instructions: "Doe sla in kom. Snijd appel in partjes. Verdeel kaas en noten. Besprenkel royaal met honing."
+  },
+  {
+    id: 29,
+    title: "Spruitjesstamppot met Spekjes",
+    tags: ["Winter", "Hollandse pot"],
+    time: "25 min",
+    ingredients: ["Aardappels", "Spruitjes (geschoond)", "Spekjes", "Melk", "Mosterd"],
+    instructions: "Kook aardappels en spruitjes samen gaar. Bak spekjes uit. Stamp alles met scheutje melk en lepel mosterd."
+  },
+  {
+    id: 30,
+    title: "Shakshuka (Eieren in Saus)",
+    tags: ["Vega", "Eiwitrijk"],
+    time: "20 min",
+    ingredients: ["Eieren", "Paprika", "Tomatenblokjes (blik)", "Ui", "Komijnpoeder"],
+    instructions: "Fruit ui en paprika. Voeg tomaat en kruiden toe. Maak kuiltjes in saus, breek eieren erin. Deksel erop tot ei stolt."
   }
 ];
 
