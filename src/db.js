@@ -1,5 +1,5 @@
 import { openDB } from 'idb';
-import { RECIPES, SPECIAL_DATES, CIRCUIT_EXERCISES } from './App';
+import { RECIPES, SPECIAL_DATES, CIRCUIT_EXERCISES } from './constants';
 
 const DB_NAME = 'volleybal-app-db';
 const DB_VERSION = 4;
