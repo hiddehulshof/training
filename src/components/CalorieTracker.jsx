@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, Plus, BarChart2, ChevronDown, ChevronUp, Keyboard, Send, Activity, X } from 'lucide-react';
+import { Camera, Plus, BarChart2, ChevronDown, ChevronUp, Keyboard, Send, Activity, X, Edit2, Trash2, TrendingUp } from 'lucide-react';
+import FlexSearch from 'flexsearch';
 import { processFoodAnalysis, getCoachFeedback } from '../ai';
-import { put, getAll, getSetting } from '../db';
+import { put, getAll, getSetting, deleteItem } from '../db';
+import { addXP, updateStreak } from '../gamification';
 
-export default function CalorieTracker() {
+export default function CalorieTracker({ onShowInsights, date = new Date() }) {
     const [goal, setGoal] = useState(2500);
     const [macroGoals, setMacroGoals] = useState({ protein: 150, carbs: 300, fat: 80 });
     const [logs, setLogs] = useState([]);
@@ -16,9 +18,19 @@ export default function CalorieTracker() {
     const [feedback, setFeedback] = useState(null);
     const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
+    // Autocomplete State
+    const [suggestions, setSuggestions] = useState([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [searchIndex, setSearchIndex] = useState(null);
+    const [foodCache, setFoodCache] = useState({}); // Map ID/Name -> Food Object
+
+    // Review & Edit Log State
+    const [reviewData, setReviewData] = useState(null);
+    const [showReviewModal, setShowReviewModal] = useState(false);
+
     useEffect(() => {
         loadData();
-    }, []);
+    }, [date]);
 
     const loadData = async () => {
         const savedGoal = await getSetting('calorie_goal');
@@ -30,19 +42,55 @@ export default function CalorieTracker() {
         if (protein) setMacroGoals({ protein: parseInt(protein), carbs: parseInt(carbs || 300), fat: parseInt(fat || 80) });
 
         const allLogs = await getAll('calorie_logs');
-        // Filter for today
-        const todayStr = new Date().toISOString().split('T')[0];
-        const todaysLogs = allLogs.filter(l => l.date === todayStr);
-        setLogs(todaysLogs);
+        // Filter for selected date
+        const dateStr = date.toISOString().split('T')[0];
+        const selectedLogs = allLogs.filter(l => l.date === dateStr);
+        setLogs(selectedLogs);
 
         // Calculate totals
-        const stats = todaysLogs.reduce((acc, curr) => ({
+        const stats = selectedLogs.reduce((acc, curr) => ({
             calories: acc.calories + (curr.calories || 0),
             protein: acc.protein + (curr.protein || 0),
             carbs: acc.carbs + (curr.carbs || 0),
             fat: acc.fat + (curr.fat || 0)
         }), { calories: 0, protein: 0, carbs: 0, fat: 0 });
         setTodayStats(stats);
+
+        // Initialize Search Index
+        initSearchArgs(allLogs);
+    };
+
+    const initSearchArgs = async (historyLogs) => {
+        const suggestionsStore = await getAll('food_suggestions');
+
+        const index = new FlexSearch.Index({
+            tokenize: "forward",
+            resolution: 9
+        });
+
+        const cache = {};
+
+        // Index Suggestions Store
+        suggestionsStore.forEach(item => {
+            index.add(item.name, item.name); // Using name as ID for now
+            cache[item.name] = item;
+        });
+
+        // Index History (Unique items)
+        const historyMap = new Map();
+        historyLogs.forEach(log => {
+            if (log.food && !historyMap.has(log.food) && !cache[log.food]) {
+                historyMap.set(log.food, log);
+            }
+        });
+
+        historyMap.forEach((log, name) => {
+            index.add(name, name);
+            cache[name] = { ...log, name: log.food, quantity: log.quantity };
+        });
+
+        setSearchIndex(index);
+        setFoodCache(cache);
     };
 
     const handleImageUpload = async (e) => {
@@ -52,6 +100,37 @@ export default function CalorieTracker() {
         await performAnalysis({ imageFile: file });
     };
 
+    const handleManualChange = (e) => {
+        const text = e.target.value;
+        setManualText(text);
+
+        if (text.length > 1 && searchIndex) {
+            const results = searchIndex.search(text, { limit: 5 });
+            setSuggestions(results.map(name => foodCache[name]));
+            setShowSuggestions(true);
+        } else {
+            setShowSuggestions(false);
+        }
+    };
+
+    const selectSuggestion = (item) => {
+        setManualText(item.name);
+        setShowSuggestions(false);
+
+        // Hydrate Review Modal directly without AI
+        setReviewData({
+            food: item.name,
+            quantity: item.quantity || '1 portie',
+            calories: item.calories,
+            protein: item.protein,
+            carbs: item.carbs,
+            fat: item.fat,
+            image: null,
+            type: getMealTypeByTime()
+        });
+        setShowReviewModal(true);
+    };
+
     const handleManualSubmit = async (e) => {
         e.preventDefault();
         if (!manualText.trim()) return;
@@ -59,6 +138,24 @@ export default function CalorieTracker() {
         await performAnalysis({ text: manualText });
         setManualText('');
         setShowManualInput(false);
+        setShowSuggestions(false);
+    };
+
+    const handleDeleteLog = async (id) => {
+        if (confirm("Weet je zeker dat je dit item wilt verwijderen?")) {
+            await deleteItem('calorie_logs', id);
+            await loadData();
+        }
+    };
+
+    const handleEditLog = (log) => {
+        setReviewData({
+            ...log,
+            image: log.image || null,
+            quantity: log.quantity || '',
+            type: log.type || getMealTypeByTime()
+        });
+        setShowReviewModal(true);
     };
 
     const performAnalysis = async ({ imageFile, text }) => {
@@ -81,22 +178,81 @@ export default function CalorieTracker() {
 
             const result = await processFoodAnalysis({ image: base64Image, text }, apiKey);
 
-            // Save log
-            const newLog = {
-                id: Date.now(),
-                date: new Date().toISOString().split('T')[0],
-                timestamp: Date.now(),
+            // Open Review Modal instead of saving immediately
+            setReviewData({
                 ...result,
-                image: base64Image // Optional
-            };
-
-            await put('calorie_logs', newLog);
-            await loadData();
+                image: base64Image,
+                quantity: result.quantity || '1 portie', // Default if missing
+                type: getMealTypeByTime() // Auto-detect meal type
+            });
+            setShowReviewModal(true);
 
         } catch (err) {
             alert("AI Analyse mislukt: " + err.message);
         } finally {
             setIsScanning(false);
+        }
+    };
+
+    const getMealTypeByTime = () => {
+        const hour = new Date().getHours();
+        if (hour < 11) return 'Ontbijt';
+        if (hour < 15) return 'Lunch';
+        if (hour < 17) return 'Tussendoortje';
+        return 'Diner';
+    };
+
+    const handleSaveLog = async (e) => {
+        e.preventDefault();
+        if (!reviewData) return;
+
+        const formData = new FormData(e.target);
+
+        const newLog = {
+            id: reviewData.id || Date.now(), // Use existing ID if editing
+            date: reviewData.date || date.toISOString().split('T')[0],
+            timestamp: reviewData.timestamp || Date.now(),
+            food: formData.get('food'),
+            quantity: formData.get('quantity'),
+            type: formData.get('type'),
+            calories: parseInt(formData.get('calories')),
+            protein: parseInt(formData.get('protein')),
+            carbs: parseInt(formData.get('carbs')),
+            fat: parseInt(formData.get('fat')),
+            image: reviewData.image
+        };
+
+        try {
+            await put('calorie_logs', newLog);
+
+            // Gamification: Award XP and update streak
+            await addXP(10);
+            await updateStreak();
+
+            // Learn new food
+            const suggestionItem = {
+                name: newLog.food,
+                calories: newLog.calories,
+                protein: newLog.protein,
+                carbs: newLog.carbs,
+                fat: newLog.fat,
+                quantity: newLog.quantity
+            };
+            await put('food_suggestions', suggestionItem); // Save to DB
+
+            // Update local cache & index
+            if (searchIndex && !foodCache[newLog.food]) {
+                searchIndex.add(newLog.food, newLog.food);
+                setFoodCache(prev => ({ ...prev, [newLog.food]: suggestionItem }));
+            }
+
+            await loadData();
+            setShowReviewModal(false);
+            setReviewData(null);
+
+            // Show confetti or success feedback here if desired
+        } catch (err) {
+            alert("Opslaan mislukt: " + err.message);
         }
     };
 
@@ -143,6 +299,13 @@ export default function CalorieTracker() {
                     <p className="text-sm text-slate-500">Doel: {goal} kcal</p>
                 </div>
                 <div className="flex gap-2">
+                    <button
+                        onClick={onShowInsights}
+                        className="p-2 bg-blue-50 text-blue-600 rounded-full hover:bg-blue-100 transition"
+                        title="Statistieken"
+                    >
+                        <TrendingUp className="w-5 h-5" />
+                    </button>
                     <button
                         onClick={handleAnalyzeWeek}
                         disabled={isAnalyzing}
@@ -237,16 +400,34 @@ export default function CalorieTracker() {
                         </button>
                     </>
                 ) : (
-                    <form onSubmit={handleManualSubmit} className="flex-1 flex gap-2">
-                        <input
-                            autoFocus
-                            type="text"
-                            placeholder="Bijv: 2 boterhammen met kaas"
-                            className="flex-1 p-3 border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                            value={manualText}
-                            onChange={(e) => setManualText(e.target.value)}
-                            disabled={isScanning}
-                        />
+                    <form onSubmit={handleManualSubmit} className="flex-1 flex gap-2 relative">
+                        <div className="flex-1 relative">
+                            <input
+                                autoFocus
+                                type="text"
+                                placeholder="Bijv: 2 boterhammen met kaas"
+                                className="w-full p-3 border border-blue-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                value={manualText}
+                                onChange={handleManualChange}
+                                disabled={isScanning}
+                                onBlur={() => setTimeout(() => setShowSuggestions(false), 200)}
+                            />
+                            {showSuggestions && suggestions.length > 0 && (
+                                <div className="absolute bottom-full left-0 w-full bg-white rounded-xl shadow-xl border border-slate-100 mb-2 overflow-hidden z-50">
+                                    {suggestions.map((item, i) => (
+                                        <button
+                                            key={i}
+                                            type="button"
+                                            className="w-full text-left p-3 hover:bg-blue-50 flex justify-between items-center group transition"
+                                            onClick={() => selectSuggestion(item)}
+                                        >
+                                            <span className="font-bold text-slate-700 text-sm">{item.name}</span>
+                                            <span className="text-xs text-slate-400 group-hover:text-blue-500">{item.calories} kcal</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                         <button
                             type="submit"
                             disabled={isScanning || !manualText}
@@ -284,9 +465,17 @@ export default function CalorieTracker() {
                                 {log.image && <img src={log.image} alt="food" className="w-10 h-10 rounded-lg object-cover" />}
                                 <div className="flex-1 overflow-hidden">
                                     <p className="text-sm font-bold text-slate-700 truncate">{log.food}</p>
-                                    <p className="text-[10px] text-slate-400">{new Date(log.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
+                                    <p className="text-[10px] text-slate-400 capitalize">{log.type || 'Snack'} • {log.quantity || '1 portie'}</p>
                                 </div>
                                 <span className="text-sm font-bold text-slate-600">{log.calories}</span>
+                                <div className="flex gap-1 ml-2">
+                                    <button onClick={() => handleEditLog(log)} className="p-1.5 text-slate-300 hover:text-blue-500 hover:bg-blue-50 rounded-lg transition">
+                                        <Edit2 className="w-4 h-4" />
+                                    </button>
+                                    <button onClick={() => handleDeleteLog(log.id)} className="p-1.5 text-slate-300 hover:text-red-500 hover:bg-red-50 rounded-lg transition">
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -315,6 +504,108 @@ export default function CalorieTracker() {
                             </ul>
                         </div>
                     </div>
+                </div>
+            )}
+
+            {/* Review Modal */}
+            {showReviewModal && reviewData && (
+                <div className="fixed inset-0 z-[90] flex items-center justify-center p-4">
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setShowReviewModal(false)} />
+                    <form onSubmit={handleSaveLog} className="bg-white w-full max-w-sm rounded-3xl shadow-2xl relative z-10 overflow-hidden animate-in fade-in zoom-in duration-200">
+
+                        {/* Image Header */}
+                        <div className="relative h-48 bg-slate-100">
+                            {reviewData.image ? (
+                                <img src={reviewData.image} alt="Food" className="w-full h-full object-cover" />
+                            ) : (
+                                <div className="w-full h-full flex items-center justify-center text-slate-300">
+                                    <Camera className="w-12 h-12" />
+                                </div>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => setShowReviewModal(false)}
+                                className="absolute top-4 right-4 p-2 bg-black/20 text-white rounded-full backdrop-blur-md hover:bg-black/30 transition"
+                            >
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+
+                        <div className="p-6">
+                            <h3 className="text-xl font-bold text-slate-800 mb-4">Even Checken! 👀</h3>
+
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Wat eet je?</label>
+                                    <input
+                                        name="food"
+                                        defaultValue={reviewData.food}
+                                        className="w-full p-3 bg-slate-50 border-none rounded-xl font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Hoeveelheid</label>
+                                        <input
+                                            name="quantity"
+                                            defaultValue={reviewData.quantity}
+                                            className="w-full p-3 bg-slate-50 border-none rounded-xl font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-400 uppercase mb-1">Type</label>
+                                        <select
+                                            name="type"
+                                            defaultValue={reviewData.type}
+                                            className="w-full p-3 bg-slate-50 border-none rounded-xl font-bold text-slate-700 focus:ring-2 focus:ring-blue-500 outline-none appearance-none"
+                                        >
+                                            <option value="Ontbijt">Ontbijt 🥐</option>
+                                            <option value="Lunch">Lunch 🥪</option>
+                                            <option value="Diner">Diner 🍝</option>
+                                            <option value="Tussendoortje">Snack 🍎</option>
+                                        </select>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 bg-blue-50 rounded-xl space-y-3">
+                                    <div className="flex justify-between items-center border-b border-blue-100 pb-2">
+                                        <span className="font-bold text-blue-800">Calorieën</span>
+                                        <div className="flex items-center gap-1">
+                                            <input
+                                                name="calories"
+                                                type="number"
+                                                defaultValue={reviewData.calories}
+                                                className="w-20 text-right font-bold text-blue-600 bg-transparent border-b border-dashed border-blue-300 focus:border-blue-600 outline-none"
+                                            />
+                                            <span className="text-xs font-bold text-blue-400">kcal</span>
+                                        </div>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2 text-center">
+                                        <div>
+                                            <span className="text-[10px] uppercase font-bold text-slate-400 block">Eiwit</span>
+                                            <input name="protein" type="number" defaultValue={reviewData.protein} className="w-full text-center font-bold text-slate-700 bg-transparent border-b border-slate-200 focus:border-blue-500 outline-none" />
+                                        </div>
+                                        <div>
+                                            <span className="text-[10px] uppercase font-bold text-slate-400 block">Koolh</span>
+                                            <input name="carbs" type="number" defaultValue={reviewData.carbs} className="w-full text-center font-bold text-slate-700 bg-transparent border-b border-slate-200 focus:border-blue-500 outline-none" />
+                                        </div>
+                                        <div>
+                                            <span className="text-[10px] uppercase font-bold text-slate-400 block">Vet</span>
+                                            <input name="fat" type="number" defaultValue={reviewData.fat} className="w-full text-center font-bold text-slate-700 bg-transparent border-b border-slate-200 focus:border-blue-500 outline-none" />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button
+                                    type="submit"
+                                    className="w-full py-4 bg-blue-600 text-white rounded-xl font-bold text-lg hover:bg-blue-700 transform hover:scale-[1.02] transition shadow-lg shadow-blue-200 flex items-center justify-center gap-2"
+                                >
+                                    <Plus className="w-5 h-5" /> Toevoegen
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             )}
         </div>

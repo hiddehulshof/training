@@ -11,16 +11,22 @@ export const processFoodAnalysis = async ({ image, text }, apiKey) => {
     const MODEL = "google/gemini-2.0-flash-001";
 
     let prompt = `
-  Analyze this food entry.Estimate calories and macros.
+  Analyze this food entry for a Dutch user.
+  IMPORTANT: Use standard Dutch portion sizes and nutritional values (NEVO table) for accuracy.
+  - A standard slice of bread ("boterham") is approx 35g (~82 kcal).
+  - Common toppings like jam, hagelslag, or cheese have specific standard portions (e.g., 15-20g).
+  - Avoid overestimating: "1 boterham met kaas" is typically ~180-200 kcal, not 300+.
+
   Return ONLY raw JSON with this exact structure(no markdown, no backticks):
 {
     "food": "Name of the food (in Dutch)",
-        "calories": 500,
-            "protein": 30,
-                "carbs": 50,
-                    "fat": 15
+    "quantity": "Estimated amount (e.g. 100g, 1 bowl, 2 slices)",
+    "calories": 500,
+    "protein": 30,
+    "carbs": 50,
+    "fat": 15
 }
-  If unsure, give your best estimate.Stay concise.
+  If unsure, give your best estimate based on standard portions. Stay concise.
   `;
 
     const content = [{ type: "text", text: prompt }];
@@ -200,6 +206,71 @@ export const calculateNutritionGoals = async ({ stats, schedule }, apiKey) => {
 
     } catch (error) {
         console.error("Nutrition Calc Error:", error);
+        throw error;
+    }
+};
+
+export const analyzeProgress = async ({ logs, goals }, apiKey) => {
+    if (!apiKey) throw new Error('Geen API Key gevonden.');
+
+    const MODEL = "google/gemini-2.0-flash-001";
+
+    const prompt = `
+    Role: Professional Sports Nutritionist.
+    Objective: Analyze the player's nutrition data for the last 30 days.
+    Language: Dutch (Nederlands).
+
+    Goals:
+    - Calories: ${goals.calories}
+    - Protein: ${goals.protein}g
+    - Carbs: ${goals.carbs}g
+    - Fat: ${goals.fat}g
+
+    Data Summary (Last 30 Days):
+    ${JSON.stringify(logs, null, 2)}
+
+    Task:
+    Provide a friendly, motivating analysis in Dutch.
+    1. **Overall Trend**: Are they hitting their goals? (Mention average calories/protein).
+    2. **Consistency**: How stable is their intake?
+    3. **3 Actionable Tips**: One each for Protein, Energy (Carbs), and General Health.
+
+    Return ONLY JSON:
+    {
+      "summary": "Short paragraph summarizing the month...",
+      "tips": [
+        "Tip 1...",
+        "Tip 2...",
+        "Tip 3..."
+      ]
+    }
+    `;
+
+    try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "HTTP-Referer": "http://localhost:5173",
+                "X-Title": "Volleyball App",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "model": MODEL,
+                "messages": [{ "role": "user", "content": prompt }]
+            })
+        });
+
+        if (!response.ok) throw new Error('Analysis request failed');
+
+        const data = await response.json();
+        const content = data.choices[0].message.content;
+        const cleanJson = content.replace(/```json/g, '').replace(/```/g, '').trim();
+
+        return JSON.parse(cleanJson);
+
+    } catch (error) {
+        console.error("Analysis Error:", error);
         throw error;
     }
 };

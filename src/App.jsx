@@ -9,6 +9,8 @@ import {
 } from 'lucide-react';
 import DataManagement from './components/DataManagement';
 import CalorieTracker from './components/CalorieTracker';
+import Insights from './components/Insights';
+import { getUserStats } from './gamification';
 
 // --- DATA & LOGIC ---
 
@@ -395,6 +397,9 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('home');
   const [currentDate, setCurrentDate] = useState(new Date());
 
+  // Feature Modals
+  const [showInsights, setShowInsights] = useState(false);
+
   // Modals
   const [showRecipeModal, setShowRecipeModal] = useState(false);
   const [selectedRecipe, setSelectedRecipe] = useState(null);
@@ -406,6 +411,7 @@ export default function App() {
   const [habits, setHabits] = useState({ water: false, fruit: false, veggies: false, protein: false });
   const [shoppingListItems, setShoppingListItems] = useState([]);
   const [showAdminModal, setShowAdminModal] = useState(false);
+  const [userStats, setUserStats] = useState({ level: 1, progress: 0, streak: 0 });
 
   // Load Data from DB
   const loadData = async () => {
@@ -437,6 +443,9 @@ export default function App() {
 
     const savedList = await getSetting('shoppingList');
     if (savedList) setShoppingListItems(savedList);
+
+    const stats = await getUserStats();
+    setUserStats(stats);
   };
 
   useEffect(() => {
@@ -489,13 +498,39 @@ export default function App() {
       {/* Header */}
       <div className="flex justify-between items-end px-1">
         <div>
-          <p className="text-sm font-medium text-slate-500 uppercase tracking-wider">{currentDate.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })}</p>
+          <label className="relative cursor-pointer group flex items-center gap-2">
+            <input
+              type="date"
+              className="absolute inset-0 opacity-0 cursor-pointer"
+              value={currentDate.toISOString().split('T')[0]}
+              onChange={(e) => setCurrentDate(new Date(e.target.value))}
+            />
+            <p className="text-sm font-medium text-slate-500 uppercase tracking-wider group-hover:text-blue-600 transition flex items-center gap-1">
+              {currentDate.toLocaleDateString('nl-NL', { weekday: 'long', day: 'numeric', month: 'long' })}
+              <ChevronRight className="w-4 h-4 rotate-90" />
+            </p>
+          </label>
           <h1 className="text-3xl font-bold text-slate-900">Hoi, Hidde 👋</h1>
         </div>
         <div className="flex gap-2">
-          <button onClick={() => setShowAdminModal(true)} className="p-2 rounded-full bg-slate-100 text-slate-400 hover:text-slate-600 transition">
-            <Settings className="w-6 h-6" />
-          </button>
+          <div className="flex items-center gap-3">
+            <div className="bg-white/80 backdrop-blur-sm px-3 py-1.5 rounded-full border border-slate-200 flex items-center gap-2 shadow-sm">
+              <div className="relative w-5 h-5 flex items-center justify-center">
+                <svg className="w-full h-full transform -rotate-90">
+                  <circle cx="10" cy="10" r="8" stroke="#e2e8f0" strokeWidth="3" fill="none" />
+                  <circle cx="10" cy="10" r="8" stroke="#3b82f6" strokeWidth="3" fill="none" strokeDasharray="50" strokeDashoffset={50 - (50 * userStats.progress) / 100} />
+                </svg>
+                <span className="absolute text-[8px] font-bold text-blue-600">{userStats.level}</span>
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-slate-400 uppercase leading-none">Level</span>
+                <span className="text-xs font-bold text-slate-800 leading-none">{userStats.level}</span>
+              </div>
+            </div>
+            <button onClick={() => setShowAdminModal(true)} className="p-2 rounded-full bg-slate-100 text-slate-400 hover:text-slate-600 transition">
+              <Settings className="w-6 h-6" />
+            </button>
+          </div>
           <button onClick={() => setCurrentDate(new Date())} className={`p-2 rounded-full transition ${isToday ? 'bg-blue-100 text-blue-600' : 'bg-slate-100 text-slate-400'}`}>
             <Calendar className="w-6 h-6" />
           </button>
@@ -579,7 +614,10 @@ export default function App() {
         <p className="text-slate-500">Brandstof voor je prestaties.</p>
       </div>
 
-      <CalorieTracker />
+      <CalorieTracker
+        onShowInsights={() => setShowInsights(true)}
+        date={currentDate}
+      />
 
       {/* Daily Plan Card */}
       <div className="bg-green-50 rounded-3xl p-6 border border-green-100 relative overflow-hidden">
@@ -726,6 +764,13 @@ export default function App() {
           {activeTab === 'circuit' && renderCircuit()}
           {activeTab === 'list' && renderList()}
         </div>
+
+        {/* Full Screen Insights Overlay */}
+        {showInsights && (
+          <div className="absolute inset-0 z-[100] bg-white">
+            <Insights onClose={() => setShowInsights(false)} />
+          </div>
+        )}
 
         {/* Bottom Navigation */}
         <BottomNav activeTab={activeTab} setActiveTab={setActiveTab} />
