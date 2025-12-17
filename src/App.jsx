@@ -10,6 +10,7 @@ import {
 import DataManagement from './components/DataManagement';
 import CalorieTracker from './components/CalorieTracker';
 import Insights from './components/Insights';
+import TrainingLogModal from './components/TrainingLogModal';
 import { getUserStats } from './gamification';
 
 // --- DATA & LOGIC ---
@@ -399,6 +400,8 @@ export default function App() {
 
   // Feature Modals
   const [showInsights, setShowInsights] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [showTrainingModal, setShowTrainingModal] = useState(false);
 
   // Modals
   const [showRecipeModal, setShowRecipeModal] = useState(false);
@@ -554,13 +557,22 @@ export default function App() {
           <p className="text-white/90 font-medium text-lg mb-6 max-w-[80%]">{plan.details}</p>
 
           {plan.type === 'strength' && (
-            <button
-              onClick={() => setActiveTab('circuit')}
-              className="bg-white text-orange-600 px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:bg-orange-50 transition flex items-center gap-2"
-            >
-              Start Circuit <ArrowRight className="w-4 h-4" />
-            </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setActiveTab('circuit')}
+                className="bg-white text-orange-600 px-5 py-2.5 rounded-xl font-bold text-sm shadow-sm hover:bg-orange-50 transition flex items-center gap-2"
+              >
+                Start Circuit <ArrowRight className="w-4 h-4" />
+              </button>
+
+            </div>
           )}
+          <button
+            onClick={() => setShowTrainingModal(true)}
+            className="bg-orange-700/50 text-white px-5 py-2.5 rounded-xl font-bold text-sm hover:bg-orange-700/70 transition flex items-center gap-2"
+          >
+            Log Resultaat <Trophy className="w-4 h-4" />
+          </button>
         </div>
       </div>
 
@@ -764,6 +776,17 @@ export default function App() {
           {activeTab === 'circuit' && renderCircuit()}
           {activeTab === 'list' && renderList()}
         </div>
+        {/* Modals */}
+        {showSettings && <DataManagement onClose={() => setShowSettings(false)} />}
+
+        {showTrainingModal && (
+          <TrainingLogModal
+            onClose={() => setShowTrainingModal(false)}
+            trainingType={plan.type}
+          />
+        )}
+
+        {/* Navigation Bar */}
 
         {/* Full Screen Insights Overlay */}
         {showInsights && (

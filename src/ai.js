@@ -274,3 +274,127 @@ export const analyzeProgress = async ({ logs, goals }, apiKey) => {
         throw error;
     }
 };
+
+export const generateMealSuggestion = async ({ remainingMacros, pantryItems }, apiKey) => {
+    if (!apiKey) throw new Error('Geen API Key gevonden.');
+
+    const MODEL = "google/gemini-2.0-flash-001";
+
+    const prompt = `
+    Role: Pragmatic nutrition logic engine.
+    Task: Create a meal plan to match these remaining macros (±10%).
+    
+    Remaining Macros:
+    - Calories: ${remainingMacros.calories}
+    - Protein: ${remainingMacros.protein}g
+    - Carbs: ${remainingMacros.carbs}g
+    - Fat: ${remainingMacros.fat}g
+
+    Available Pantry Ingredients (Priority 1):
+    ${pantryItems.join(', ')}
+
+    Strategy:
+    1. Priority 1: Use 'Available Pantry Ingredients' provided.
+    2. Priority 2: If ingredients are insufficient, fill gaps with "Easy Access" foods (generic, no-cook items like Fruit, Quark, Tuna, Protein Bar).
+    
+    Output Constraint: For every ingredient, add a "source" field: "pantry" (if from list) or "store" (if AI suggestion).
+    
+    Return ONLY JSON format:
+    {
+      "meal_name": "String (Creative name)",
+      "ingredients": [
+        {"name": "String", "amount": Number, "unit": "String", "source": "pantry|store", "id": "String|null", "macros": { "calories": 0, "protein": 0, "carbs": 0, "fat": 0 }}
+      ],
+      "match_score": Number (0-100)
+    }
+    `;
+
+    try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "HTTP-Referer": "http://localhost:5173",
+                "X-Title": "Volleyball App",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "model": MODEL,
+                "messages": [{ "role": "user", "content": prompt }]
+            })
+        });
+
+        if (!response.ok) throw new Error('Suggestion request failed');
+
+        const data = await response.json();
+        const content = data.choices[0].message.content;
+        const cleanJson = content.replace(/```json/g, '').replace(/```/g, '').trim();
+
+        return JSON.parse(cleanJson);
+
+    } catch (error) {
+        console.error("Suggestion Error:", error);
+        throw error;
+    }
+};
+
+
+export const analyzeFuelEfficiency = async ({ trainingLog, recentNutritionLogs }, apiKey) => {
+    if (!apiKey) throw new Error('Geen API Key gevonden.');
+
+    const MODEL = "google/gemini-2.0-flash-001";
+
+    const prompt = `
+    Role: Professional Sports Nutritionist.
+    Task: Correlate the user's workout performance with their nutrition history (last 24h).
+
+    Workout Details:
+    - Type: ${trainingLog.type}
+    - Duration: ${trainingLog.duration} min
+    - Rating: ${trainingLog.rating}/10
+    - Notes: ${trainingLog.notes || 'None'}
+
+    Nutrition (Last 24h):
+    ${JSON.stringify(recentNutritionLogs.map(l => `${l.quantity} ${l.food} (${l.calories}kcal, P:${l.protein}g, C:${l.carbs}g, F:${l.fat}g)`), null, 2)}
+
+    Analysis Goal:
+    Identify ONE key nutritional factor that likely influenced this rating (positive or negative). 
+    - If rating is high (>7), identify what fueled it (e.g., "Great carb timing", "Sufficient protein").
+    - If rating is low (<6), identify what might be missing (e.g., "Low energy/carbs", "Heavy meal before training").
+
+    Return ONLY JSON:
+    {
+      "score": "Calculated Fuel Efficiency Score (0-100 based on nutrition quality)",
+      "insight": "One sentence explanation of the correlation.",
+      "recommendation": "One specific tip for next time."
+    }
+    `;
+
+    try {
+        const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+            method: "POST",
+            headers: {
+                "Authorization": `Bearer ${apiKey}`,
+                "HTTP-Referer": "http://localhost:5173",
+                "X-Title": "Volleyball App",
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                "model": MODEL,
+                "messages": [{ "role": "user", "content": prompt }]
+            })
+        });
+
+        if (!response.ok) throw new Error('Fuel analysis request failed');
+
+        const data = await response.json();
+        const content = data.choices[0].message.content;
+        const cleanJson = content.replace(/```json/g, '').replace(/```/g, '').trim();
+
+        return JSON.parse(cleanJson);
+
+    } catch (error) {
+        console.error("Fuel Analysis Error:", error);
+        throw error;
+    }
+};

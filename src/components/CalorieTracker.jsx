@@ -4,6 +4,7 @@ import FlexSearch from 'flexsearch';
 import { processFoodAnalysis, getCoachFeedback } from '../ai';
 import { put, getAll, getSetting, deleteItem } from '../db';
 import { addXP, updateStreak } from '../gamification';
+import MacroTetrisModal from './MacroTetrisModal';
 
 export default function CalorieTracker({ onShowInsights, date = new Date() }) {
     const [goal, setGoal] = useState(2500);
@@ -27,6 +28,7 @@ export default function CalorieTracker({ onShowInsights, date = new Date() }) {
     // Review & Edit Log State
     const [reviewData, setReviewData] = useState(null);
     const [showReviewModal, setShowReviewModal] = useState(false);
+    const [showTetrisModal, setShowTetrisModal] = useState(false);
 
     useEffect(() => {
         loadData();
@@ -289,6 +291,60 @@ export default function CalorieTracker({ onShowInsights, date = new Date() }) {
         }
     };
 
+    const handleLogTetrisMeal = async (meal) => {
+        try {
+            // 1. Process all ingredients
+            for (const item of meal.ingredients) {
+                // If it's a new "store" item, learn it
+                if (item.source === 'store') {
+                    const newSuggestion = {
+                        name: item.name,
+                        calories: Math.round(item.macros.calories),
+                        protein: Math.round(item.macros.protein),
+                        carbs: Math.round(item.macros.carbs),
+                        fat: Math.round(item.macros.fat),
+                        quantity: `${item.amount} ${item.unit}`
+                    };
+                    await put('food_suggestions', newSuggestion);
+
+                    // Update cache
+                    if (searchIndex) {
+                        searchIndex.add(newSuggestion.name, newSuggestion.name);
+                        setFoodCache(prev => ({ ...prev, [newSuggestion.name]: newSuggestion }));
+                    }
+                }
+
+                // Log the item
+                const newLog = {
+                    id: Date.now() + Math.random(), // Unique ID
+                    date: date.toISOString().split('T')[0],
+                    timestamp: Date.now(),
+                    food: item.name,
+                    quantity: `${item.amount} ${item.unit}`,
+                    type: getMealTypeByTime(),
+                    calories: Math.round(item.macros.calories),
+                    protein: Math.round(item.macros.protein),
+                    carbs: Math.round(item.macros.carbs),
+                    fat: Math.round(item.macros.fat),
+                    image: null
+                };
+                await put('calorie_logs', newLog);
+            }
+
+            // 2. Gamification
+            await addXP(25); // Bonus XP for using AI meal
+            await updateStreak();
+
+            // 3. UI Updates
+            await loadData();
+            setShowTetrisModal(false);
+
+            // Optional: Show success
+        } catch (err) {
+            alert("Fout bij loggen maaltijd: " + err.message);
+        }
+    };
+
     const progress = Math.min((todayStats.calories / goal) * 100, 100);
 
     return (
@@ -313,6 +369,13 @@ export default function CalorieTracker({ onShowInsights, date = new Date() }) {
                         title="AI Coach Analyse"
                     >
                         {isAnalyzing ? <Activity className="w-5 h-5 animate-spin" /> : <Activity className="w-5 h-5" />}
+                    </button>
+                    <button
+                        onClick={() => setShowTetrisModal(true)}
+                        className="p-2 bg-indigo-50 text-indigo-600 rounded-full hover:bg-indigo-100 transition"
+                        title="Wat zal ik eten?"
+                    >
+                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20.5 6V4a2 2 0 0 0-2-2h-3.5a2 2 0 0 0-2 2v2" /><path d="M9 6V4a2 2 0 0 1 2-2h3.5a2 2 0 0 1 2 2v2" /><path d="M3.5 6v14a2 2 0 0 0 2 2h13a2 2 0 0 0 2-2v-6a2 2 0 0 0-2-2h-2" /><path d="M12.5 12h-9a2 2 0 0 0-2 2v4a2 2 0 0 0 2 2h4.5" /></svg>
                     </button>
                     <div className="text-right">
                         <span className="text-2xl font-bold text-blue-600">{todayStats.calories}</span>
@@ -607,6 +670,18 @@ export default function CalorieTracker({ onShowInsights, date = new Date() }) {
                         </div>
                     </form>
                 </div>
+            )}
+            {showTetrisModal && (
+                <MacroTetrisModal
+                    remainingMacros={{
+                        calories: goal - todayStats.calories,
+                        protein: macroGoals.protein - todayStats.protein,
+                        carbs: macroGoals.carbs - todayStats.carbs,
+                        fat: macroGoals.fat - todayStats.fat
+                    }}
+                    onClose={() => setShowTetrisModal(false)}
+                    onLogMeal={handleLogTetrisMeal}
+                />
             )}
         </div>
     );

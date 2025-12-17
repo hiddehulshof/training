@@ -2,7 +2,7 @@ import { openDB } from 'idb';
 import { RECIPES, SPECIAL_DATES, CIRCUIT_EXERCISES } from './App';
 
 const DB_NAME = 'volleybal-app-db';
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 export async function initDB() {
     return openDB(DB_NAME, DB_VERSION, {
@@ -25,6 +25,9 @@ export async function initDB() {
             }
             if (!db.objectStoreNames.contains('food_suggestions')) {
                 db.createObjectStore('food_suggestions', { keyPath: 'name' });
+            }
+            if (!db.objectStoreNames.contains('training_logs')) {
+                db.createObjectStore('training_logs', { keyPath: 'id' });
             }
         },
     });
